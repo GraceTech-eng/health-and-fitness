@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Setup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+        label {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        .save-button {
+            grid-column: span 2;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .save-button a button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .save-button a button:hover {
+            background-color: #0056b3;
+        }
+        .error {
+            color: #ff4d4d;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        @media (max-width: 600px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-group.full-width {
+                grid-column: span 1;
+            }
+            .save-button {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Complete Profile</h1>
+        <form id="profile-form">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="age">Age</label>
+                    <input type="number" id="age" name="age" placeholder="Enter your age" required>
+                    <span class="error" id="age-error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="gender">Gender</label>
+                    <select id="gender" name="gender" required>
+                        <option value="" disabled selected>Select gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <span class="error" id="gender-error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="height">Height (cm)</label>
+                    <input type="number" id="height" name="height" placeholder="Enter height in cm" required>
+                    <span class="error" id="height-error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="weight">Weight (kg)</label>
+                    <input type="number" id="weight" name="weight" placeholder="Enter weight in kg" required>
+                    <span class="error" id="weight-error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="activity-level">Activity Level</label>
+                    <select id="activity-level" name="activity-level" required>
+                        <option value="" disabled selected>Select activity level</option>
+                        <option value="sedentary">Sedentary</option>
+                        <option value="light">Lightly Active</option>
+                        <option value="moderate">Moderately Active</option>
+                        <option value="active">Very Active</option>
+                    </select>
+                    <span class="error" id="activity-level-error"></span>
+                </div>
+                <div class="form-group full-width">
+                    <label for="health-goals">Health Goals</label>
+                    <textarea id="health-goals" name="health-goals" placeholder="Describe your health goals" required></textarea>
+                    <span class="error" id="health-goals-error"></span>
+                </div>
+                <div class="form-group full-width">
+                    <label for="niche-info">Additional Information (e.g., allergies, delivery type)</label>
+                    <textarea id="niche-info" name="niche-info" placeholder="Enter any allergies or specific details"></textarea>
+                </div>
+                <div class="save-button">
+                    <a href="DashLG.html" id="save-profile-link"><button type="submit">Save Profile</button></a>
+                </div>
+            </div>
+        </form>
+    </div>
+    <script>
+        // Pre-fill data if available from signup
+        const signupData = JSON.parse(localStorage.getItem('signupData') || '{}');
+        if (signupData.name) {
+            console.log('Pre-filled signup data:', signupData);
+        }
+
+        document.getElementById('profile-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            document.querySelectorAll('.error').forEach(el => el.textContent = '');
+
+            const age = document.getElementById('age').value;
+            const gender = document.getElementById('gender').value;
+            const height = document.getElementById('height').value;
+            const weight = document.getElementById('weight').value;
+            const activityLevel = document.getElementById('activity-level').value;
+            const healthGoals = document.getElementById('health-goals').value;
+            const nicheInfo = document.getElementById('niche-info').value;
+
+            let isValid = true;
+            if (!age || age < 1 || age > 120) {
+                document.getElementById('age-error').textContent = 'Please enter a valid age (1-120).';
+                isValid = false;
+            }
+            if (!gender) {
+                document.getElementById('gender-error').textContent = 'Please select a gender.';
+                isValid = false;
+            }
+            if (!height || height < 50 || height > 300) {
+                document.getElementById('height-error').textContent = 'Please enter a valid height (50-300 cm).';
+                isValid = false;
+            }
+            if (!weight || weight < 20 || weight > 500) {
+                document.getElementById('weight-error').textContent = 'Please enter a valid weight (20-500 kg).';
+                isValid = false;
+            }
+            if (!activityLevel) {
+                document.getElementById('activity-level-error').textContent = 'Please select an activity level.';
+                isValid = false;
+            }
+            if (!healthGoals) {
+                document.getElementById('health-goals-error').textContent = 'Please describe your health goals.';
+                isValid = false;
+            }
+
+            if (isValid) {
+                const profileData = {
+                    name: signupData.name || 'Unknown',
+                    email: signupData.email || 'Unknown',
+                    age: parseInt(age),
+                    gender,
+                    height: parseFloat(height),
+                    weight: parseFloat(weight),
+                    activityLevel,
+                    healthGoals,
+                    nicheInfo,
+                    userId: 'ABC' + Math.random().toString(36).substr(2, 9)
+                };
+                console.log('Submitting profile data:', profileData);
+                localStorage.setItem('profileData', JSON.stringify(profileData));
+                document.getElementById('save-profile-link').click();
+            }
+        });
+    </script>
+</body>
+</html>

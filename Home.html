@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Health Hub</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #007bff;
+            color: #fff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .logout-button {
+            background-color: #ff4d4d;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .logout-button:hover {
+            background-color: #cc0000;
+        }
+        .section {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .section h2 {
+            margin: 0 0 15px;
+            color: #333;
+            font-size: 20px;
+        }
+        .profile-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .profile-item {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .activity-logging .log-button {
+            background-color: #28a745;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 15px;
+        }
+        .activity-logging .log-button:hover {
+            background-color: #218838;
+        }
+        .activity-list {
+            list-style: none;
+            padding: 0;
+        }
+        .activity-list li {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .chart-placeholder {
+            background-color: #e9ecef;
+            height: 200px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 16px;
+        }
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .content-card {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .generate-plan-button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: block;
+            margin: 0 auto 20px;
+        }
+        .generate-plan-button:hover {
+            background-color: #0056b3;
+        }
+        .plan-display {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            min-height: 100px;
+        }
+        .reminders-placeholder, .analytics-placeholder {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            color: #666;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            .header h1 {
+                font-size: 20px;
+            }
+            .logout-button {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Health Hub</h1>
+            <button class="logout-button" onclick="handleLogout()">Logout</button>
+        </div>
+        <div class="section profile-summary">
+            <h2>User Profile Summary</h2>
+            <div class="profile-item" id="profile-name">Name: Loading...</div>
+            <div class="profile-item" id="profile-age">Age: Loading...</div>
+            <div class="profile-item" id="profile-gender">Gender: Loading...</div>
+            <div class="profile-item" id="profile-goals">Goals: Loading...</div>
+            <div class="profile-item" id="profile-user-id">User ID: Loading...</div>
+        </div>
+        <div class="section activity-logging">
+            <h2>Activity Logging</h2>
+            <button class="log-button">Log Generic Activity</button>
+            <h3>Recent Activities</h3>
+            <ul class="activity-list">
+                <li>Workout - 30 min run (2025-05-27)</li>
+                <li>Meditation - 15 min session (2025-05-26)</li>
+                <li>Meal - Grilled chicken salad (2025-05-25)</li>
+            </ul>
+        </div>
+        <div class="section progress-tracking">
+            <h2>Progress Tracking</h2>
+            <div class="chart-placeholder">Chart Placeholder (e.g., Weekly Progress Graph)</div>
+        </div>
+        <div class="section curated-content">
+            <h2>Curated Content & AI-Powered Plans</h2>
+            <div class="content-grid">
+                <div class="content-card">Workout Guide<br>Strength Training Basics</div>
+                <div class="content-card">Meditation Session<br>10-Minute Mindfulness</div>
+                <div class="content-card">Healthy Recipe<br>Quinoa Veggie Bowl</div>
+            </div>
+            <button class="generate-plan-button" id="generate-plan">✨ Generate Personalized Plan</button>
+            <div class="plan-display" id="plan-display">Generated Health Plan will appear here...</div>
+        </div>
+        <div class="section reminders">
+            <h2>Reminders & Notifications</h2>
+            <div class="reminders-placeholder">Reminders settings placeholder</div>
+        </div>
+        <div class="section analytics">
+            <h2>Basic Analytics & Insights</h2>
+            <div class="analytics-placeholder">Summary data placeholder (e.g., weekly stats)</div>
+        </div>
+    </div>
+    <script>
+        // Load profile data
+        const profileData = JSON.parse(localStorage.getItem('profileData') || '{}');
+        document.getElementById('profile-name').textContent = `Name: ${profileData.name || 'Unknown'}`;
+        document.getElementById('profile-age').textContent = `Age: ${profileData.age || 'Unknown'}`;
+        document.getElementById('profile-gender').textContent = `Gender: ${profileData.gender || 'Unknown'}`;
+        document.getElementById('profile-goals').textContent = `Goals: ${profileData.healthGoals || 'Unknown'}`;
+        document.getElementById('profile-user-id').textContent = `User ID: ${profileData.userId || 'Unknown'}`;
+
+        document.getElementById('generate-plan').addEventListener('click', function() {
+            const mockPlan = `
+                <h3>Your Personalized Health Plan</h3>
+                <p>Based on your profile (Name: ${profileData.name || 'Unknown'}, Age: ${profileData.age || 'Unknown'}, Gender: ${profileData.gender || 'Unknown'}, Goals: ${profileData.healthGoals || 'Unknown'}):</p>
+                <ul>
+                    <li><strong>Workout</strong>: 30 min strength training, 3x/week</li>
+                    <li><strong>Meditation</strong>: 10 min daily mindfulness session</li>
+                    <li><strong>Diet</strong>: Incorporate high-protein meals (e.g., quinoa bowl)</li>
+                </ul>
+            `;
+            document.getElementById('plan-display').innerHTML = mockPlan;
+        });
+
+        function handleLogout() {
+            localStorage.removeItem('signupData');
+            localStorage.removeItem('profileData');
+            window.location.href = 'LG.html';
+        }
+    </script>
+</body>
+</html>

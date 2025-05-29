@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Login & Sign Up</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        h2 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .form-container {
+            display: block;
+        }
+        .form-container.hidden {
+            display: none;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .toggle-link {
+            text-align: center;
+            margin-top: 15px;
+        }
+        .toggle-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .toggle-link a:hover {
+            text-decoration: underline;
+        }
+        .error {
+            color: #ff4d4d;
+            font-size: 12px;
+            margin-top: 5px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Form -->
+        <div id="login-form" class="form-container">
+            <h2>Login</h2>
+            <form id="login" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" required>
+                    <span class="error" id="login-email-error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required>
+                    <span class="error" id="login-password-error"></span>
+                </div>
+                <button type="submit">Login</button>
+            </form>
+            <div class="toggle-link">
+                <p>Don't have an account? <a href="#" onclick="toggleForm('signup')">Sign Up</a></p>
+            </div>
+        </div>
+
+        <!-- Sign Up Form -->
+        <div id="signup-form" class="form-container hidden">
+            <h2>Sign Up</h2>
+            <form id="signup" onsubmit="handleSignUp(event)">
+                <div class="form-group">
+                    <label for="signup-name">Name</label>
+                    <input type="text" id="signup-name" required>
+                    <span class="error" id="signup-name-error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="signup-email">Email</label>
+                    <input type="email" id="signup-email" required>
+                    <span class="error" id="signup-email-error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Password</label>
+                    <input type="password" id="signup-password" required>
+                    <span class="error" id="signup-password-error"></span>
+                </div>
+                <a href="comprofile.html" id="signup-link"><button type="submit">Sign Up</button></a>
+            </form>
+            <div class="toggle-link">
+                <p>Already have an account? <a href="#" onclick="toggleForm('login')">Login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleForm(form) {
+            document.getElementById('login-form').classList.toggle('hidden', form !== 'login');
+            document.getElementById('signup-form').classList.toggle('hidden', form !== 'signup');
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            document.querySelectorAll('.error').forEach(el => el.textContent = '');
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            let isValid = true;
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                document.getElementById('login-email-error').textContent = 'Please enter a valid email.';
+                isValid = false;
+            }
+            if (!password || password.length < 6) {
+                document.getElementById('login-password-error').textContent = 'Password must be at least 6 characters.';
+                isValid = false;
+            }
+            if (isValid) {
+                const loginData = { email, password };
+                console.log('Login attempt:', loginData);
+                window.location.href = 'DashLG.html';
+            }
+        }
+
+        function handleSignUp(event) {
+            event.preventDefault();
+            document.querySelectorAll('.error').forEach(el => el.textContent = '');
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            let isValid = true;
+            if (!name || name.length < 2) {
+                document.getElementById('signup-name-error').textContent = 'Name must be at least 2 characters.';
+                isValid = false;
+            }
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                document.getElementById('signup-email-error').textContent = 'Please enter a valid email.';
+                isValid = false;
+            }
+            if (!password || password.length < 6) {
+                document.getElementById('signup-password-error').textContent = 'Password must be at least 6 characters.';
+                isValid = false;
+            }
+            if (isValid) {
+                const signupData = { name, email, password };
+                console.log('Sign Up data:', signupData);
+                localStorage.setItem('signupData', JSON.stringify(signupData));
+                document.getElementById('signup-link').click();
+            }
+        }
+    </script>
+</body>
+</html>
