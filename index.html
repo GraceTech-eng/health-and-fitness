@@ -3,191 +3,539 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App Login & Sign Up</title>
+    <title>Health & Fitness Utility App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            background-color: #f0f0f0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* bg-slate-50 */
+            color: #334155; /* text-slate-700 */
         }
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        .chart-container {
+            position: relative;
             width: 100%;
-            max-width: 400px;
+            max-width: 600px; /* max-w-2xl equivalent */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Base height, Tailwind h-72 or h-80 */
+            max-height: 400px; /* max-h-96 */
         }
-        h2 {
-            text-align: center;
-            font-size: 24px;
-            margin-bottom: 20px;
+        @media (min-width: 768px) { /* md breakpoint */
+            .chart-container {
+                height: 350px; /* Tailwind h-80 or h-96 */
+            }
         }
-        .form-container {
-            display: block;
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
         }
-        .form-container.hidden {
-            display: none;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        input:focus {
-            outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #007bff;
+        .btn-primary {
+            background-color: #4f46e5; /* bg-indigo-600 */
             color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
         }
-        button:hover {
-            background-color: #0056b3;
+        .btn-primary:hover {
+            background-color: #4338ca; /* hover:bg-indigo-700 */
         }
-        .toggle-link {
-            text-align: center;
-            margin-top: 15px;
+        .btn-secondary {
+            background-color: #7c3aed; /* bg-purple-600 */
+            color: white;
         }
-        .toggle-link a {
-            color: #007bff;
-            text-decoration: none;
+        .btn-secondary:hover {
+            background-color: #6d28d9; /* hover:bg-purple-700 */
         }
-        .toggle-link a:hover {
-            text-decoration: underline;
+        .card {
+            background-color: white;
+            border-radius: 0.75rem; /* rounded-xl */
+            padding: 2rem; /* p-8 */
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); /* shadow-lg */
+            margin-bottom: 2rem; /* mb-8 */
         }
-        .error {
-            color: #ff4d4d;
-            font-size: 12px;
-            margin-top: 5px;
-            display: block;
+        h2, h3, h4 {
+            color: #1e293b; /* text-slate-800 */
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <!-- Login Form -->
-        <div id="login-form" class="form-container">
-            <h2>Login</h2>
-            <form id="login" onsubmit="handleLogin(event)">
-                <div class="form-group">
-                    <label for="login-email">Email</label>
-                    <input type="email" id="login-email" required>
-                    <span class="error" id="login-email-error"></span>
-                </div>
-                <div class="form-group">
-                    <label for="login-password">Password</label>
-                    <input type="password" id="login-password" required>
-                    <span class="error" id="login-password-error"></span>
-                </div>
-                <button type="submit">Login</button>
-            </form>
-            <div class="toggle-link">
-                <p>Don't have an account? <a href="#" onclick="toggleForm('signup')">Sign Up</a></p>
-            </div>
+<body class="min-h-screen flex flex-col">
+    <div id="app" class="flex-grow container mx-auto p-4 md:p-8">
         </div>
 
-        <!-- Sign Up Form -->
-        <div id="signup-form" class="form-container hidden">
-            <h2>Sign Up</h2>
-            <form id="signup" onsubmit="handleSignUp(event)">
-                <div class="form-group">
-                    <label for="signup-name">Name</label>
-                    <input type="text" id="signup-name" required>
-                    <span class="error" id="signup-name-error"></span>
-                </div>
-                <div class="form-group">
-                    <label for="signup-email">Email</label>
-                    <input type="email" id="signup-email" required>
-                    <span class="error" id="signup-email-error"></span>
-                </div>
-                <div class="form-group">
-                    <label for="signup-password">Password</label>
-                    <input type="password" id="signup-password" required>
-                    <span class="error" id="signup-password-error"></span>
-                </div>
-                <a href="comprofile.html" id="signup-link"><button type="submit">Sign Up</button></a>
-            </form>
-            <div class="toggle-link">
-                <p>Already have an account? <a href="#" onclick="toggleForm('login')">Login</a></p>
-            </div>
-        </div>
-    </div>
+    <script type="module">
+        // Import Firebase modules - These will be used for actual Firebase integration
+        // However, for this self-contained HTML file demonstration, Firebase interactions are simulated.
+        // import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        // import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    <script>
-        function toggleForm(form) {
-            document.getElementById('login-form').classList.toggle('hidden', form !== 'login');
-            document.getElementById('signup-form').classList.toggle('hidden', form !== 'signup');
+        // --- Global State & Configuration ---
+        let currentPage = 'auth'; // 'auth', 'profileSetup', 'dashboard'
+        let isLoading = false;
+        let messageModal = { title: '', message: '', visible: false };
+
+        // Simulated User Data (in a real app, this comes from Firebase)
+        let currentUser = null; // { uid: '123', email: 'user@example.com' }
+        let userProfile = null; // { age: 30, gender: 'female', healthGoals: 'Weight loss', ... }
+        let recentActivities = []; // [{ id: 'act1', type: 'Generic Activity', notes: 'Logged something', timestamp: new Date() }]
+        let generatedPlan = '';
+
+        const appContainer = document.getElementById('app');
+
+        // IMPORTANT: Point this to your running Node.js backend server
+        const BACKEND_API_URL = 'http://localhost:3000'; 
+
+        // --- Utility Functions ---
+        function showLoading(show) {
+            isLoading = show;
+            renderApp();
         }
 
-        function handleLogin(event) {
-            event.preventDefault();
-            document.querySelectorAll('.error').forEach(el => el.textContent = '');
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            let isValid = true;
-            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                document.getElementById('login-email-error').textContent = 'Please enter a valid email.';
-                isValid = false;
+        function showMessage(title, message) {
+            messageModal = { title, message, visible: true };
+            renderApp();
+        }
+
+        function closeMessage() {
+            messageModal.visible = false;
+            renderApp();
+        }
+
+        // --- Rendering Functions ---
+        function renderApp() {
+            let content = '';
+            if (isLoading) {
+                content += renderLoadingSpinner();
             }
-            if (!password || password.length < 6) {
-                document.getElementById('login-password-error').textContent = 'Password must be at least 6 characters.';
-                isValid = false;
+            if (messageModal.visible) {
+                content += renderMessageModal();
             }
-            if (isValid) {
-                const loginData = { email, password };
-                console.log('Login attempt:', loginData);
-                window.location.href = 'DashLG.html';
+
+            switch (currentPage) {
+                case 'auth':
+                    content += renderAuthScreen();
+                    break;
+                case 'profileSetup':
+                    content += renderProfileSetupScreen();
+                    break;
+                case 'dashboard':
+                    content += renderDashboardScreen();
+                    break;
+                default:
+                    content += `<p>Error: Page not found</p>`;
+            }
+            appContainer.innerHTML = content;
+            attachEventListeners(); // Re-attach listeners after every render
+        }
+
+        function renderLoadingSpinner() {
+            return `
+                <div class="fixed inset-0 modal-backdrop flex items-center justify-center z-50">
+                    <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-500"></div>
+                    <p class="ml-4 text-white text-lg">Loading...</p>
+                </div>
+            `;
+        }
+
+        function renderMessageModal() {
+            return `
+                <div class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+                    <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full">
+                        <h3 class="text-xl font-semibold mb-4">${messageModal.title}</h3>
+                        <p class="text-slate-700 mb-6">${messageModal.message}</p>
+                        <div class="flex justify-end">
+                            <button id="closeModalBtn" class="btn-primary px-6 py-2 rounded-md">Close</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAuthScreen() {
+            return `
+                <div class="flex flex-col items-center justify-center min-h-[80vh]">
+                    <div class="card w-full max-w-md">
+                        <h2 class="text-3xl font-bold text-center text-indigo-700 mb-8">Welcome!</h2>
+                        <p class="text-center text-slate-600 mb-6">Please login or sign up to continue.</p>
+                        <div class="space-y-6">
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                                <input type="email" id="email" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="your.email@example.com" value="user@example.com">
+                            </div>
+                            <div>
+                                <label for="password" class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                                <input type="password" id="password" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="••••••••" value="password123">
+                            </div>
+                            <button id="loginBtn" class="w-full btn-primary py-3 rounded-lg font-semibold shadow-md transform hover:scale-105 transition-transform">Login</button>
+                            <button id="signupBtn" class="w-full btn-secondary py-3 rounded-lg font-semibold shadow-md transform hover:scale-105 transition-transform">Sign Up</button>
+                        </div>
+                        <p class="text-center text-slate-500 text-sm mt-6">Social logins (Google/Apple ID) coming soon!</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderProfileSetupScreen() {
+            return `
+                <div class="max-w-2xl mx-auto">
+                    <div class="card">
+                        <h2 class="text-3xl font-bold text-center text-blue-700 mb-8">Complete Your Profile</h2>
+                        <p class="text-center text-slate-600 mb-6">This information helps us personalize your experience.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div>
+                                <label for="age" class="block text-sm font-medium text-slate-700 mb-1">Age</label>
+                                <input type="number" id="age" class="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="e.g., 30" value="${userProfile?.age || ''}">
+                            </div>
+                            <div>
+                                <label for="gender" class="block text-sm font-medium text-slate-700 mb-1">Gender</label>
+                                <select id="gender" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                                    <option value="">Select Gender</option>
+                                    <option value="male" ${userProfile?.gender === 'male' ? 'selected' : ''}>Male</option>
+                                    <option value="female" ${userProfile?.gender === 'female' ? 'selected' : ''}>Female</option>
+                                    <option value="other" ${userProfile?.gender === 'other' ? 'selected' : ''}>Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="height" class="block text-sm font-medium text-slate-700 mb-1">Height (cm)</label>
+                                <input type="number" id="height" class="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="e.g., 175" value="${userProfile?.height || ''}">
+                            </div>
+                            <div>
+                                <label for="weight" class="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</label>
+                                <input type="number" id="weight" class="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="e.g., 70" value="${userProfile?.weight || ''}">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="activityLevel" class="block text-sm font-medium text-slate-700 mb-1">Activity Level</label>
+                                <select id="activityLevel" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                                    <option value="">Select Activity Level</option>
+                                    <option value="sedentary" ${userProfile?.activityLevel === 'sedentary' ? 'selected' : ''}>Sedentary</option>
+                                    <option value="light" ${userProfile?.activityLevel === 'light' ? 'selected' : ''}>Lightly Active</option>
+                                    <option value="moderate" ${userProfile?.activityLevel === 'moderate' ? 'selected' : ''}>Moderately Active</option>
+                                    <option value="very" ${userProfile?.activityLevel === 'very' ? 'selected' : ''}>Very Active</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="healthGoals" class="block text-sm font-medium text-slate-700 mb-1">Health Goals</label>
+                                <textarea id="healthGoals" class="w-full px-4 py-2 border border-slate-300 rounded-lg h-24" placeholder="e.g., Weight loss, muscle gain...">${userProfile?.healthGoals || ''}</textarea>
+                            </div>
+                             <div class="md:col-span-2">
+                                <label for="nicheSpecific" class="block text-sm font-medium text-slate-700 mb-1">Niche-Specific Info</label>
+                                <textarea id="nicheSpecific" class="w-full px-4 py-2 border border-slate-300 rounded-lg h-24" placeholder="e.g., Allergies, specific conditions...">${userProfile?.nicheSpecific || ''}</textarea>
+                            </div>
+                        </div>
+                        <button id="saveProfileBtn" class="w-full btn-primary py-3 rounded-lg font-semibold shadow-md">Save Profile</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDashboardScreen() {
+            let activitiesHtml = recentActivities.length > 0 
+                ? recentActivities.map(act => `<li class="text-slate-600 py-1">${act.type}: ${act.notes} (${new Date(act.timestamp).toLocaleDateString()})</li>`).join('')
+                : '<p class="text-slate-500">No activities logged yet.</p>';
+
+            let planHtml = generatedPlan 
+                ? `<div class="bg-green-50 p-4 rounded-lg mt-4"><h4 class="font-semibold text-green-700 mb-2">Your Personalized Plan:</h4><p class="text-slate-700 whitespace-pre-wrap">${generatedPlan}</p></div>`
+                : '<p class="text-slate-500 mt-4">Click the button to generate your plan!</p>';
+
+            return `
+                <div>
+                    <header class="flex justify-between items-center py-6 mb-8 border-b border-slate-200">
+                        <h1 class="text-3xl font-bold text-indigo-700">Health Dashboard</h1>
+                        <button id="logoutBtn" class="btn-secondary px-6 py-2 rounded-lg font-semibold">Logout</button>
+                    </header>
+
+                    <section class="card" id="profile-summary">
+                        <h3 class="text-2xl font-semibold mb-4">Profile Summary</h3>
+                        <p class="text-slate-600 mb-4">Welcome back! Here's a quick overview of your profile. Keeping this up-to-date helps in personalizing your experience and recommendations.</p>
+                        ${userProfile ? `
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-slate-700">
+                                <p><strong>Email:</strong> ${currentUser?.email}</p>
+                                <p><strong>Age:</strong> ${userProfile.age || 'N/A'}</p>
+                                <p><strong>Gender:</strong> ${userProfile.gender || 'N/A'}</p>
+                                <p><strong>Height:</strong> ${userProfile.height || 'N/A'} cm</p>
+                                <p><strong>Weight:</strong> ${userProfile.weight || 'N/A'} kg</p>
+                                <p><strong>Activity:</strong> ${userProfile.activityLevel || 'N/A'}</p>
+                                <p class="md:col-span-2"><strong>Goals:</strong> ${userProfile.healthGoals || 'N/A'}</p>
+                                <p class="md:col-span-2"><strong>Niche Info:</strong> ${userProfile.nicheSpecific || 'N/A'}</p>
+                            </div>
+                        ` : '<p class="text-slate-500">Profile not fully set up.</p>'}
+                    </section>
+
+                    <section class="card" id="logging-section">
+                        <h3 class="text-2xl font-semibold mb-4">Niche-Specific Logging</h3>
+                         <p class="text-slate-600 mb-4">Track your activities to monitor progress. This section will be tailored to your chosen niche (e.g., workouts, nutrition, mindfulness).</p>
+                        <button id="logActivityBtn" class="btn-primary px-6 py-2 rounded-lg mb-4">Log Generic Activity</button>
+                        <h4 class="text-xl font-medium mb-2">Recent Activities:</h4>
+                        <ul class="list-disc list-inside pl-5">${activitiesHtml}</ul>
+                    </section>
+
+                    <section class="card" id="progress-tracking">
+                        <h3 class="text-2xl font-semibold mb-4">Progress Tracking</h3>
+                        <p class="text-slate-600 mb-4">Visualize your journey over time. Charts and graphs for key metrics like weight, exercise progression, or sleep consistency will appear here.</p>
+                        <div class="chart-container bg-slate-100 rounded-lg flex items-center justify-center">
+                            <canvas id="progressChartCanvas"></canvas>
+                            <p id="chartPlaceholderText" class="text-slate-400 font-semibold">Chart Placeholder - Data will be visualized here</p>
+                        </div>
+                    </section>
+
+                    <section class="card" id="content-ai-plans">
+                        <h3 class="text-2xl font-semibold mb-4">Curated Content & AI-Powered Plans</h3>
+                        <p class="text-slate-600 mb-4">Explore resources relevant to your goals, or let our AI generate a personalized plan for you based on your profile.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="bg-slate-100 p-4 rounded-lg text-center"><p class="font-medium">Workout Guide 1</p></div>
+                            <div class="bg-slate-100 p-4 rounded-lg text-center"><p class="font-medium">Meditation Session</p></div>
+                            <div class="bg-slate-100 p-4 rounded-lg text-center"><p class="font-medium">Healthy Recipe</p></div>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-3">Personalized Health Plan</h4>
+                        <button id="generatePlanBtn" class="btn-secondary px-6 py-2 rounded-lg">✨ Generate Personalized Plan</button>
+                        <div id="generatedPlanArea" class="mt-4 text-slate-700">${planHtml}</div>
+                    </section>
+                    
+                    <section class="card" id="reminders-notifications">
+                        <h3 class="text-2xl font-semibold mb-4">Reminders & Notifications</h3>
+                        <p class="text-slate-600 mb-4">Set up customizable reminders for logging activities, workouts, meals, or medication. This feature will help you stay consistent.</p>
+                        <div class="h-24 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 font-semibold">Notification Settings (Placeholder)</div>
+                    </section>
+
+                    <section class="card" id="analytics-insights">
+                        <h3 class="text-2xl font-semibold mb-4">Basic Analytics & Insights</h3>
+                        <p class="text-slate-600 mb-4">Get an overview of your daily, weekly, or monthly progress. Simple insights based on your logged data will be presented here to guide you.</p>
+                        <div class="h-24 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 font-semibold">Insights Summary (Placeholder)</div>
+                    </section>
+                </div>
+            `;
+        }
+
+        // --- Event Handlers & Logic ---
+        function attachEventListeners() {
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            if (closeModalBtn) closeModalBtn.onclick = closeMessage;
+
+            if (currentPage === 'auth') {
+                const loginBtn = document.getElementById('loginBtn');
+                if (loginBtn) loginBtn.onclick = handleLogin;
+                const signupBtn = document.getElementById('signupBtn');
+                if (signupBtn) signupBtn.onclick = handleSignup;
+            } else if (currentPage === 'profileSetup') {
+                const saveProfileBtn = document.getElementById('saveProfileBtn');
+                if (saveProfileBtn) saveProfileBtn.onclick = handleSaveProfile;
+            } else if (currentPage === 'dashboard') {
+                const logoutBtn = document.getElementById('logoutBtn');
+                if (logoutBtn) logoutBtn.onclick = handleLogout;
+                const logActivityBtn = document.getElementById('logActivityBtn');
+                if (logActivityBtn) logActivityBtn.onclick = handleLogActivity;
+                const generatePlanBtn = document.getElementById('generatePlanBtn');
+                if (generatePlanBtn) generatePlanBtn.onclick = handleGeneratePlan;
+                
+                // Attempt to render chart if canvas exists
+                const chartCanvas = document.getElementById('progressChartCanvas');
+                if (chartCanvas && recentActivities.length > 0) { // Only render if there's data
+                    document.getElementById('chartPlaceholderText').style.display = 'none';
+                    renderSampleChart(chartCanvas);
+                } else if (chartCanvas) {
+                     document.getElementById('chartPlaceholderText').style.display = 'flex';
+                }
             }
         }
 
-        function handleSignUp(event) {
-            event.preventDefault();
-            document.querySelectorAll('.error').forEach(el => el.textContent = '');
-            const name = document.getElementById('signup-name').value;
-            const email = document.getElementById('signup-email').value;
-            const password = document.getElementById('signup-password').value;
-            let isValid = true;
-            if (!name || name.length < 2) {
-                document.getElementById('signup-name-error').textContent = 'Name must be at least 2 characters.';
-                isValid = false;
+        function handleLogin() {
+            showLoading(true);
+            const email = document.getElementById('email').value;
+            // Simulate Firebase Auth
+            setTimeout(() => {
+                currentUser = { uid: 'sim_user_123', email: email };
+                // Simulate fetching profile
+                if (localStorage.getItem('userProfile_sim_user_123')) {
+                    userProfile = JSON.parse(localStorage.getItem('userProfile_sim_user_123'));
+                    currentPage = 'dashboard';
+                } else {
+                    userProfile = {}; // Initialize empty profile
+                    currentPage = 'profileSetup';
+                }
+                // Simulate fetching activities
+                const storedActivities = localStorage.getItem('activities_sim_user_123');
+                recentActivities = storedActivities ? JSON.parse(storedActivities) : [];
+
+                showLoading(false);
+                showMessage('Login Successful', 'Welcome back!');
+            }, 1000);
+        }
+
+        function handleSignup() {
+            showLoading(true);
+            const email = document.getElementById('email').value;
+            // Simulate Firebase Auth
+            setTimeout(() => {
+                currentUser = { uid: 'sim_user_new_456', email: email };
+                userProfile = {}; // Initialize empty profile for new user
+                recentActivities = [];
+                generatedPlan = '';
+                currentPage = 'profileSetup';
+                showLoading(false);
+                showMessage('Signup Successful', 'Please complete your profile.');
+            }, 1000);
+        }
+
+        function handleSaveProfile() {
+            showLoading(true);
+            userProfile = {
+                age: document.getElementById('age').value,
+                gender: document.getElementById('gender').value,
+                height: document.getElementById('height').value,
+                weight: document.getElementById('weight').value,
+                activityLevel: document.getElementById('activityLevel').value,
+                healthGoals: document.getElementById('healthGoals').value,
+                nicheSpecific: document.getElementById('nicheSpecific').value,
+            };
+            // Simulate saving to Firestore (localStorage)
+            if (currentUser) {
+                localStorage.setItem(`userProfile_${currentUser.uid}`, JSON.stringify(userProfile));
             }
-            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                document.getElementById('signup-email-error').textContent = 'Please enter a valid email.';
-                isValid = false;
+            setTimeout(() => {
+                currentPage = 'dashboard';
+                showLoading(false);
+                showMessage('Profile Saved', 'Your profile has been updated.');
+            }, 1000);
+        }
+
+        function handleLogout() {
+            showLoading(true);
+            setTimeout(() => {
+                currentUser = null;
+                userProfile = null;
+                recentActivities = [];
+                generatedPlan = '';
+                currentPage = 'auth';
+                showLoading(false);
+                showMessage('Logged Out', 'You have been successfully logged out.');
+            }, 500);
+        }
+
+        async function handleLogActivity() {
+            const newActivity = {
+                id: `act${Date.now()}`,
+                type: 'Generic Activity',
+                notes: `Logged at ${new Date().toLocaleTimeString()}`,
+                timestamp: new Date().toISOString()
+            };
+            recentActivities.unshift(newActivity); // Add to beginning
+            if (currentUser) {
+                 localStorage.setItem(`activities_${currentUser.uid}`, JSON.stringify(recentActivities));
             }
-            if (!password || password.length < 6) {
-                document.getElementById('signup-password-error').textContent = 'Password must be at least 6 characters.';
-                isValid = false;
+            renderApp(); // Re-render to show new activity
+            showMessage('Activity Logged', 'Your activity has been recorded.');
+        }
+
+        async function handleGeneratePlan() {
+            if (!userProfile || Object.keys(userProfile).length === 0 || !userProfile.healthGoals) {
+                showMessage('Profile Incomplete', 'Please complete your profile, especially health goals, to generate a plan.');
+                return;
             }
-            if (isValid) {
-                const signupData = { name, email, password };
-                console.log('Sign Up data:', signupData);
-                localStorage.setItem('signupData', JSON.stringify(signupData));
-                document.getElementById('signup-link').click();
+            showLoading(true);
+            generatedPlan = ''; // Clear previous plan
+            
+            try {
+                // *** This is the crucial part that calls your Node.js backend ***
+                const response = await fetch(`${BACKEND_API_URL}/generate-plan`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userProfile: userProfile }) // Send the user profile to the backend
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                if (result.plan) {
+                    generatedPlan = result.plan;
+                } else {
+                    showMessage('API Error', 'Failed to generate plan. Unexpected response from backend.');
+                    console.error('Backend response structure error:', result);
+                }
+            } catch (error) {
+                showMessage('Network Error', `Failed to generate plan: ${error.message}. Please ensure your backend server is running at ${BACKEND_API_URL}.`);
+                console.error('Frontend fetch error:', error);
+            } finally {
+                showLoading(false);
+                renderApp(); // Re-render to show generated plan or error message
             }
         }
+        
+        let sampleChartInstance = null;
+        function renderSampleChart(canvasElement) {
+            if (sampleChartInstance) {
+                sampleChartInstance.destroy(); // Destroy previous instance to prevent conflicts
+            }
+            const ctx = canvasElement.getContext('2d');
+            
+            // Create some sample data based on logged activities count or timestamps
+            const labels = recentActivities.slice(0, 7).map((act, index) => `Day ${index + 1}`).reverse();
+            const dataPoints = recentActivities.slice(0, 7).map(() => Math.floor(Math.random() * 5) + 1).reverse(); // Random "effort"
+
+            sampleChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Activity Level (Sample)',
+                        data: dataPoints,
+                        borderColor: '#4f46e5', // indigo-600
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        tension: 0.3,
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Sample Metric' }
+                        },
+                        x: {
+                             title: { display: true, text: 'Recent Activities' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                        },
+                        tooltip: {
+                            enabled: true,
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                }
+            });
+        }
+
+
+        // --- Initial Load ---
+        window.onload = () => {
+            showLoading(true);
+            setTimeout(() => {
+                // Check if a user was previously logged in (simulated using localStorage)
+                const storedUser = localStorage.getItem('currentUser');
+                if (storedUser) {
+                    currentUser = JSON.parse(storedUser);
+                    const storedProfile = localStorage.getItem(`userProfile_${currentUser.uid}`);
+                    if (storedProfile) {
+                        userProfile = JSON.parse(storedProfile);
+                    } else {
+                        userProfile = {}; // User exists but no profile, send to profile setup
+                    }
+                    const storedActivities = localStorage.getItem(`activities_${currentUser.uid}`);
+                    recentActivities = storedActivities ? JSON.parse(storedActivities) : [];
+                    currentPage = 'dashboard';
+                } else {
+                    currentPage = 'auth';
+                }
+                showLoading(false); // This will trigger the first renderApp()
+            }, 500);
+        };
     </script>
 </body>
 </html>
