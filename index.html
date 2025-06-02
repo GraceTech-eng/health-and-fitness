@@ -54,6 +54,50 @@
         h2, h3, h4 {
             color: #1e293b; /* text-slate-800 */
         }
+
+        /* NEW CSS FOR VALIDATION & PASSWORD TOGGLE */
+        .input-group {
+            position: relative;
+            margin-bottom: 1rem; /* Space between input groups */
+            display: flex;
+            flex-direction: column; /* Stack label and input/toggle */
+        }
+        .input-group input {
+            flex-grow: 1; /* Make input fill available space */
+            padding-right: 40px; /* Space for the eye icon */
+        }
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%; /* Center vertically */
+            transform: translateY(-50%); /* Adjust for exact vertical centering */
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #888;
+            z-index: 2; /* Ensure it's above the input */
+        }
+        .error-message {
+            color: #ef4444; /* Tailwind red-500 */
+            font-size: 0.875rem; /* text-sm */
+            margin-top: 0.25rem; /* mt-1 */
+            display: block;
+        }
+        /* Adjust existing input styles to ensure consistent padding */
+        input {
+            padding: 0.75rem 1rem; /* px-4 py-2 */
+            margin: 0; /* Remove default margin from input, use .input-group margin */
+            border: 1px solid #d1d5db; /* border-slate-300 */
+            border-radius: 0.5rem; /* rounded-lg */
+            width: 100%;
+            box-sizing: border-box;
+        }
+        select, textarea {
+             padding: 0.75rem 1rem; /* px-4 py-2 */
+            border: 1px solid #d1d5db; /* border-slate-300 */
+            border-radius: 0.5rem; /* rounded-lg */
+            width: 100%;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -61,27 +105,21 @@
         </div>
 
     <script type="module">
-        // Import Firebase modules - These will be used for actual Firebase integration
-        // However, for this self-contained HTML file demonstration, Firebase interactions are simulated.
-        // import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        // import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        // import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
         // --- Global State & Configuration ---
-        let currentPage = 'auth'; // 'auth', 'profileSetup', 'dashboard'
-        let isLoading = false;
-        let messageModal = { title: '', message: '', visible: false };
-
-        // Simulated User Data (in a real app, this comes from Firebase)
-        let currentUser = null; // { uid: '123', email: 'user@example.com' }
-        let userProfile = null; // { age: 30, gender: 'female', healthGoals: 'Weight loss', ... }
-        let recentActivities = []; // [{ id: 'act1', type: 'Generic Activity', notes: 'Logged something', timestamp: new Date() }]
+        // Using localStorage for basic persistence. In a real app, Firebase Auth/Firestore would manage this.
+        let currentUser = localStorage.getItem('currentUser') || null; // Stores email of logged-in user
+        let userProfile = JSON.parse(localStorage.getItem('userProfile_' + currentUser)) || {}; // Load profile specific to current user
+        let recentActivities = JSON.parse(localStorage.getItem('activities_' + currentUser)) || [];
         let generatedPlan = '';
+
+        let currentPage = 'auth'; // Default page
+        let isLoading = false;
+        let messageModal = { title: '', message: '', visible: false, type: 'info' }; // Added type for styling
 
         const appContainer = document.getElementById('app');
 
-        // IMPORTANT: Point this to your running Node.js backend server
-        const BACKEND_API_URL = 'https://health-app-backend-9pit.onrender.com'; // <<<--- UPDATE THIS LINE 
+        // IMPORTANT: Point this to your deployed Node.js backend server
+        const BACKEND_API_URL = 'https://health-app-backend-9pit.onrender.com';
 
         // --- Utility Functions ---
         function showLoading(show) {
@@ -89,14 +127,21 @@
             renderApp();
         }
 
-        function showMessage(title, message) {
-            messageModal = { title, message, visible: true };
+        // Modified showMessage to showMessageModal for clarity and added type
+        function showMessageModal(title, message, type = 'info') { // type can be 'success', 'error', 'info'
+            messageModal = { title, message, visible: true, type };
             renderApp();
         }
 
-        function closeMessage() {
+        function closeMessageModal() {
             messageModal.visible = false;
             renderApp();
+        }
+
+        // Function to validate email format using a simple regex
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
         }
 
         // --- Rendering Functions ---
@@ -136,10 +181,28 @@
         }
 
         function renderMessageModal() {
+            let bgColor = '';
+            let textColor = '';
+            switch (messageModal.type) {
+                case 'success':
+                    bgColor = 'bg-green-100';
+                    textColor = 'text-green-800';
+                    break;
+                case 'error':
+                    bgColor = 'bg-red-100';
+                    textColor = 'text-red-800';
+                    break;
+                case 'info':
+                default:
+                    bgColor = 'bg-blue-100';
+                    textColor = 'text-blue-800';
+                    break;
+            }
+
             return `
                 <div class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
-                    <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full">
-                        <h3 class="text-xl font-semibold mb-4">${messageModal.title}</h3>
+                    <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full ${bgColor}">
+                        <h3 class="text-xl font-semibold mb-4 ${textColor}">${messageModal.title}</h3>
                         <p class="text-slate-700 mb-6">${messageModal.message}</p>
                         <div class="flex justify-end">
                             <button id="closeModalBtn" class="btn-primary px-6 py-2 rounded-md">Close</button>
@@ -156,13 +219,16 @@
                         <h2 class="text-3xl font-bold text-center text-indigo-700 mb-8">Welcome!</h2>
                         <p class="text-center text-slate-600 mb-6">Please login or sign up to continue.</p>
                         <div class="space-y-6">
-                            <div>
-                                <label for="email" class="block text-sm font-medium text-slate-700 mb-1">Email</label>
-                                <input type="email" id="email" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="your.email@example.com" value="user@example.com">
+                            <div class="input-group">
+                                <label for="login-email" class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                                <input type="email" id="login-email" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="your.email@example.com" value="user@example.com">
+                                <span id="login-email-error" class="error-message"></span>
                             </div>
-                            <div>
-                                <label for="password" class="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                                <input type="password" id="password" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="••••••••" value="password123">
+                            <div class="input-group">
+                                <label for="login-password" class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                                <input type="password" id="login-password" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="••••••••" value="password123">
+                                <span class="password-toggle" data-target="login-password">👁️</span>
+                                <span id="login-password-error" class="error-message"></span>
                             </div>
                             <button id="loginBtn" class="w-full btn-primary py-3 rounded-lg font-semibold shadow-md transform hover:scale-105 transition-transform">Login</button>
                             <button id="signupBtn" class="w-full btn-secondary py-3 rounded-lg font-semibold shadow-md transform hover:scale-105 transition-transform">Sign Up</button>
@@ -181,12 +247,12 @@
                         <p class="text-center text-slate-600 mb-6">This information helps us personalize your experience.</p>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                             <div>
-                                <label for="age" class="block text-sm font-medium text-slate-700 mb-1">Age</label>
-                                <input type="number" id="age" class="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="e.g., 30" value="${userProfile?.age || ''}">
+                                <label for="profile-age" class="block text-sm font-medium text-slate-700 mb-1">Age</label>
+                                <input type="number" id="profile-age" class="w-full px-4 py-2 border border-slate-30-0 rounded-lg" placeholder="e.g., 30" value="${userProfile?.age || ''}">
                             </div>
                             <div>
-                                <label for="gender" class="block text-sm font-medium text-slate-700 mb-1">Gender</label>
-                                <select id="gender" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                                <label for="profile-gender" class="block text-sm font-medium text-slate-700 mb-1">Gender</label>
+                                <select id="profile-gender" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
                                     <option value="">Select Gender</option>
                                     <option value="male" ${userProfile?.gender === 'male' ? 'selected' : ''}>Male</option>
                                     <option value="female" ${userProfile?.gender === 'female' ? 'selected' : ''}>Female</option>
@@ -194,16 +260,16 @@
                                 </select>
                             </div>
                             <div>
-                                <label for="height" class="block text-sm font-medium text-slate-700 mb-1">Height (cm)</label>
-                                <input type="number" id="height" class="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="e.g., 175" value="${userProfile?.height || ''}">
+                                <label for="profile-height" class="block text-sm font-medium text-slate-700 mb-1">Height (cm)</label>
+                                <input type="number" id="profile-height" class="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="e.g., 175" value="${userProfile?.height || ''}">
                             </div>
                             <div>
-                                <label for="weight" class="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</label>
-                                <input type="number" id="weight" class="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="e.g., 70" value="${userProfile?.weight || ''}">
+                                <label for="profile-weight" class="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</label>
+                                <input type="number" id="profile-weight" class="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="e.g., 70" value="${userProfile?.weight || ''}">
                             </div>
                             <div class="md:col-span-2">
-                                <label for="activityLevel" class="block text-sm font-medium text-slate-700 mb-1">Activity Level</label>
-                                <select id="activityLevel" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                                <label for="profile-activity-level" class="block text-sm font-medium text-slate-700 mb-1">Activity Level</label>
+                                <select id="profile-activity-level" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
                                     <option value="">Select Activity Level</option>
                                     <option value="sedentary" ${userProfile?.activityLevel === 'sedentary' ? 'selected' : ''}>Sedentary</option>
                                     <option value="light" ${userProfile?.activityLevel === 'light' ? 'selected' : ''}>Lightly Active</option>
@@ -212,26 +278,26 @@
                                 </select>
                             </div>
                             <div class="md:col-span-2">
-                                <label for="healthGoals" class="block text-sm font-medium text-slate-700 mb-1">Health Goals</label>
-                                <textarea id="healthGoals" class="w-full px-4 py-2 border border-slate-300 rounded-lg h-24" placeholder="e.g., Weight loss, muscle gain...">${userProfile?.healthGoals || ''}</textarea>
+                                <label for="profile-health-goals" class="block text-sm font-medium text-slate-700 mb-1">Health Goals</label>
+                                <textarea id="profile-health-goals" class="w-full px-4 py-2 border border-slate-300 rounded-lg h-24" placeholder="e.g., Weight loss, muscle gain...">${userProfile?.healthGoals || ''}</textarea>
                             </div>
-                             <div class="md:col-span-2">
-                                <label for="nicheSpecific" class="block text-sm font-medium text-slate-700 mb-1">Niche-Specific Info</label>
-                                <textarea id="nicheSpecific" class="w-full px-4 py-2 border border-slate-300 rounded-lg h-24" placeholder="e.g., Allergies, specific conditions...">${userProfile?.nicheSpecific || ''}</textarea>
+                            <div class="md:col-span-2">
+                                <label for="profile-niche-specific" class="block text-sm font-medium text-slate-700 mb-1">Niche-Specific Info</label>
+                                <textarea id="profile-niche-specific" class="w-full px-4 py-2 border border-slate-300 rounded-lg h-24" placeholder="e.g., Allergies, specific conditions...">${userProfile?.nicheSpecific || ''}</textarea>
                             </div>
                         </div>
-                        <button id="saveProfileBtn" class="w-full btn-primary py-3 rounded-lg font-semibold shadow-md">Save Profile</button>
+                        <button id="save-profile-btn" class="w-full btn-primary py-3 rounded-lg font-semibold shadow-md">Save Profile</button>
                     </div>
                 </div>
             `;
         }
 
         function renderDashboardScreen() {
-            let activitiesHtml = recentActivities.length > 0 
+            let activitiesHtml = recentActivities.length > 0
                 ? recentActivities.map(act => `<li class="text-slate-600 py-1">${act.type}: ${act.notes} (${new Date(act.timestamp).toLocaleDateString()})</li>`).join('')
                 : '<p class="text-slate-500">No activities logged yet.</p>';
 
-            let planHtml = generatedPlan 
+            let planHtml = generatedPlan
                 ? `<div class="bg-green-50 p-4 rounded-lg mt-4"><h4 class="font-semibold text-green-700 mb-2">Your Personalized Plan:</h4><p class="text-slate-700 whitespace-pre-wrap">${generatedPlan}</p></div>`
                 : '<p class="text-slate-500 mt-4">Click the button to generate your plan!</p>';
 
@@ -245,9 +311,9 @@
                     <section class="card" id="profile-summary">
                         <h3 class="text-2xl font-semibold mb-4">Profile Summary</h3>
                         <p class="text-slate-600 mb-4">Welcome back! Here's a quick overview of your profile. Keeping this up-to-date helps in personalizing your experience and recommendations.</p>
-                        ${userProfile ? `
+                        ${userProfile && Object.keys(userProfile).length > 0 ? `
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-slate-700">
-                                <p><strong>Email:</strong> ${currentUser?.email}</p>
+                                <p><strong>Email:</strong> ${currentUser || 'N/A'}</p>
                                 <p><strong>Age:</strong> ${userProfile.age || 'N/A'}</p>
                                 <p><strong>Gender:</strong> ${userProfile.gender || 'N/A'}</p>
                                 <p><strong>Height:</strong> ${userProfile.height || 'N/A'} cm</p>
@@ -256,12 +322,12 @@
                                 <p class="md:col-span-2"><strong>Goals:</strong> ${userProfile.healthGoals || 'N/A'}</p>
                                 <p class="md:col-span-2"><strong>Niche Info:</strong> ${userProfile.nicheSpecific || 'N/A'}</p>
                             </div>
-                        ` : '<p class="text-slate-500">Profile not fully set up.</p>'}
+                        ` : '<p class="text-slate-500">Profile not fully set up. Please go to profile setup.</p>'}
                     </section>
 
                     <section class="card" id="logging-section">
                         <h3 class="text-2xl font-semibold mb-4">Niche-Specific Logging</h3>
-                         <p class="text-slate-600 mb-4">Track your activities to monitor progress. This section will be tailored to your chosen niche (e.g., workouts, nutrition, mindfulness).</p>
+                        <p class="text-slate-600 mb-4">Track your activities to monitor progress. This section will be tailored to your chosen niche (e.g., workouts, nutrition, mindfulness).</p>
                         <button id="logActivityBtn" class="btn-primary px-6 py-2 rounded-lg mb-4">Log Generic Activity</button>
                         <h4 class="text-xl font-medium mb-2">Recent Activities:</h4>
                         <ul class="list-disc list-inside pl-5">${activitiesHtml}</ul>
@@ -288,7 +354,7 @@
                         <button id="generatePlanBtn" class="btn-secondary px-6 py-2 rounded-lg">✨ Generate Personalized Plan</button>
                         <div id="generatedPlanArea" class="mt-4 text-slate-700">${planHtml}</div>
                     </section>
-                    
+
                     <section class="card" id="reminders-notifications">
                         <h3 class="text-2xl font-semibold mb-4">Reminders & Notifications</h3>
                         <p class="text-slate-600 mb-4">Set up customizable reminders for logging activities, workouts, meals, or medication. This feature will help you stay consistent.</p>
@@ -307,7 +373,13 @@
         // --- Event Handlers & Logic ---
         function attachEventListeners() {
             const closeModalBtn = document.getElementById('closeModalBtn');
-            if (closeModalBtn) closeModalBtn.onclick = closeMessage;
+            if (closeModalBtn) closeModalBtn.onclick = closeMessageModal; // Changed to closeMessageModal
+
+            // Attach password toggle listeners
+            document.querySelectorAll('.password-toggle').forEach(toggle => {
+                toggle.removeEventListener('click', togglePasswordVisibility); // Prevent duplicate listeners
+                toggle.addEventListener('click', togglePasswordVisibility);
+            });
 
             if (currentPage === 'auth') {
                 const loginBtn = document.getElementById('loginBtn');
@@ -315,7 +387,7 @@
                 const signupBtn = document.getElementById('signupBtn');
                 if (signupBtn) signupBtn.onclick = handleSignup;
             } else if (currentPage === 'profileSetup') {
-                const saveProfileBtn = document.getElementById('saveProfileBtn');
+                const saveProfileBtn = document.getElementById('save-profile-btn'); // Corrected ID
                 if (saveProfileBtn) saveProfileBtn.onclick = handleSaveProfile;
             } else if (currentPage === 'dashboard') {
                 const logoutBtn = document.getElementById('logoutBtn');
@@ -324,88 +396,194 @@
                 if (logActivityBtn) logActivityBtn.onclick = handleLogActivity;
                 const generatePlanBtn = document.getElementById('generatePlanBtn');
                 if (generatePlanBtn) generatePlanBtn.onclick = handleGeneratePlan;
-                
-                // Attempt to render chart if canvas exists
+
                 const chartCanvas = document.getElementById('progressChartCanvas');
-                if (chartCanvas && recentActivities.length > 0) { // Only render if there's data
-                    document.getElementById('chartPlaceholderText').style.display = 'none';
-                    renderSampleChart(chartCanvas);
-                } else if (chartCanvas) {
-                     document.getElementById('chartPlaceholderText').style.display = 'flex';
+                if (chartCanvas) { // Check if canvas exists before attempting to render chart
+                    if (recentActivities.length > 0) {
+                        document.getElementById('chartPlaceholderText').style.display = 'none';
+                        renderSampleChart(chartCanvas);
+                    } else {
+                        document.getElementById('chartPlaceholderText').style.display = 'flex';
+                    }
                 }
             }
         }
 
+        // Password Visibility Toggle Function
+        function togglePasswordVisibility(event) {
+            const toggle = event.currentTarget;
+            const targetId = toggle.dataset.target;
+            const passwordInput = document.getElementById(targetId);
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggle.textContent = '🙈'; // Change to hide icon
+            } else {
+                passwordInput.type = 'password';
+                toggle.textContent = '👁️'; // Change to show icon
+            }
+        }
+
+        // Function to handle login
         function handleLogin() {
             showLoading(true);
-            const email = document.getElementById('email').value;
-            // Simulate Firebase Auth
-            setTimeout(() => {
-                currentUser = { uid: 'sim_user_123', email: email };
-                // Simulate fetching profile
-                if (localStorage.getItem('userProfile_sim_user_123')) {
-                    userProfile = JSON.parse(localStorage.getItem('userProfile_sim_user_123'));
-                    currentPage = 'dashboard';
-                } else {
-                    userProfile = {}; // Initialize empty profile
-                    currentPage = 'profileSetup';
-                }
-                // Simulate fetching activities
-                const storedActivities = localStorage.getItem('activities_sim_user_123');
-                recentActivities = storedActivities ? JSON.parse(storedActivities) : [];
+            const emailInput = document.getElementById('login-email');
+            const passwordInput = document.getElementById('login-password');
+            const emailError = document.getElementById('login-email-error');
+            const passwordError = document.getElementById('login-password-error'); // Added for consistency
 
+            emailError.textContent = '';
+            passwordError.textContent = '';
+
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!isValidEmail(email)) {
                 showLoading(false);
-                showMessage('Login Successful', 'Welcome back!');
+                emailError.textContent = 'Please enter a valid email address.';
+                return;
+            }
+
+            // Simulate login (in a real app, this would be an API call to a backend authentication service)
+            const existingUsers = JSON.parse(localStorage.getItem('users')) || [];
+            if (!existingUsers.includes(email)) {
+                showLoading(false);
+                emailError.textContent = 'No account found with this email. Please Sign Up.';
+                return;
+            }
+
+            // For simplicity, we're not checking password for demo, just email existence
+            // In a real app, you'd send email/password to backend for verification
+            setTimeout(() => {
+                localStorage.setItem('currentUser', email);
+                currentUser = email;
+                userProfile = JSON.parse(localStorage.getItem('userProfile_' + currentUser)) || {}; // Load profile specific to this user
+                recentActivities = JSON.parse(localStorage.getItem('activities_' + currentUser)) || [];
+
+                if (Object.keys(userProfile).length === 0) {
+                    showMessageModal('Welcome! Please complete your profile.', 'info');
+                    currentPage = 'profileSetup';
+                } else {
+                    showMessageModal('Welcome back, ' + currentUser + '!', 'success');
+                    currentPage = 'dashboard';
+                }
+                showLoading(false);
+                renderApp();
             }, 1000);
         }
 
+        // Function to handle signup
         function handleSignup() {
             showLoading(true);
-            const email = document.getElementById('email').value;
-            // Simulate Firebase Auth
+            const emailInput = document.getElementById('login-email'); // Using the same input fields for simplicity
+            const passwordInput = document.getElementById('login-password');
+            const confirmPasswordInput = document.getElementById('signup-confirm-password'); // This ID doesn't exist in renderAuthScreen, will be added
+            const emailError = document.getElementById('login-email-error');
+            const passwordError = document.getElementById('login-password-error'); // This ID doesn't exist in renderAuthScreen, will be added
+
+            emailError.textContent = '';
+            passwordError.textContent = '';
+
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput ? confirmPasswordInput.value : ''; // Handle if confirm password not present yet
+
+            if (!isValidEmail(email)) {
+                showLoading(false);
+                emailError.textContent = 'Please enter a valid email address.';
+                return;
+            }
+
+            if (password.length < 6) {
+                showLoading(false);
+                passwordError.textContent = 'Password must be at least 6 characters long.';
+                return;
+            }
+
+            if (confirmPasswordInput && password !== confirmPassword) {
+                showLoading(false);
+                passwordError.textContent = 'Passwords do not match.';
+                return;
+            }
+
+            const existingUsers = JSON.parse(localStorage.getItem('users')) || [];
+            if (existingUsers.includes(email)) {
+                showLoading(false);
+                emailError.textContent = 'User with this email already exists. Please Log In.';
+                return;
+            }
+
             setTimeout(() => {
-                currentUser = { uid: 'sim_user_new_456', email: email };
-                userProfile = {}; // Initialize empty profile for new user
-                recentActivities = [];
-                generatedPlan = '';
+                existingUsers.push(email);
+                localStorage.setItem('users', JSON.stringify(existingUsers));
+                localStorage.setItem('currentUser', email);
+                currentUser = email;
+                userProfile = {}; // New user starts with an empty profile
+                localStorage.setItem('userProfile_' + currentUser, JSON.stringify(userProfile)); // Store empty profile for new user
+                recentActivities = []; // Clear activities for new user
+                localStorage.setItem('activities_' + currentUser, JSON.stringify(recentActivities)); // Store empty activities for new user
+
+                showMessageModal('Signup Successful! Please complete your profile.', 'success');
                 currentPage = 'profileSetup';
                 showLoading(false);
-                showMessage('Signup Successful', 'Please complete your profile.');
+                renderApp();
             }, 1000);
         }
 
+        // Corrected handleSaveProfile function
         function handleSaveProfile() {
             showLoading(true);
-            userProfile = {
-                age: document.getElementById('age').value,
-                gender: document.getElementById('gender').value,
-                height: document.getElementById('height').value,
-                weight: document.getElementById('weight').value,
-                activityLevel: document.getElementById('activityLevel').value,
-                healthGoals: document.getElementById('healthGoals').value,
-                nicheSpecific: document.getElementById('nicheSpecific').value,
-            };
-            // Simulate saving to Firestore (localStorage)
-            if (currentUser) {
-                localStorage.setItem(`userProfile_${currentUser.uid}`, JSON.stringify(userProfile));
+            // Get elements by their new, more specific IDs
+            const age = document.getElementById('profile-age').value;
+            const gender = document.getElementById('profile-gender').value;
+            const height = document.getElementById('profile-height').value;
+            const weight = document.getElementById('profile-weight').value;
+            const activityLevel = document.getElementById('profile-activity-level').value;
+            const healthGoals = document.getElementById('profile-health-goals').value;
+            const nicheSpecific = document.getElementById('profile-niche-specific').value;
+
+            // Basic validation for required fields
+            if (!age || !gender || !height || !weight || !activityLevel || !healthGoals) {
+                showLoading(false);
+                showMessageModal('Please fill in all required profile fields (Age, Gender, Height, Weight, Activity Level, Health Goals).', 'error');
+                return;
             }
+
+            userProfile = {
+                age: parseInt(age),
+                gender: gender,
+                height: parseFloat(height),
+                weight: parseFloat(weight),
+                activityLevel: activityLevel,
+                healthGoals: healthGoals,
+                nicheSpecific: nicheSpecific
+            };
+
+            // Store user profile specific to the current user's email
+            localStorage.setItem('userProfile_' + currentUser, JSON.stringify(userProfile));
+
             setTimeout(() => {
+                showMessageModal('Profile saved successfully!', 'success');
                 currentPage = 'dashboard';
                 showLoading(false);
-                showMessage('Profile Saved', 'Your profile has been updated.');
+                renderApp();
             }, 1000);
         }
 
         function handleLogout() {
             showLoading(true);
             setTimeout(() => {
+                localStorage.removeItem('currentUser'); // Remove current user from local storage
+                localStorage.removeItem('userProfile_' + currentUser); // Remove specific user profile
+                localStorage.removeItem('activities_' + currentUser); // Remove specific user activities
+                // Clear generic userProfile and recentActivities in memory
                 currentUser = null;
                 userProfile = null;
                 recentActivities = [];
                 generatedPlan = '';
                 currentPage = 'auth';
                 showLoading(false);
-                showMessage('Logged Out', 'You have been successfully logged out.');
+                showMessageModal('Logged Out', 'You have been successfully logged out.', 'info');
             }, 500);
         }
 
@@ -418,22 +596,21 @@
             };
             recentActivities.unshift(newActivity); // Add to beginning
             if (currentUser) {
-                 localStorage.setItem(`activities_${currentUser.uid}`, JSON.stringify(recentActivities));
+                localStorage.setItem(`activities_${currentUser}`, JSON.stringify(recentActivities)); // Use currentUser (email) as key
             }
             renderApp(); // Re-render to show new activity
-            showMessage('Activity Logged', 'Your activity has been recorded.');
+            showMessageModal('Activity Logged', 'Your activity has been recorded.', 'success');
         }
 
         async function handleGeneratePlan() {
             if (!userProfile || Object.keys(userProfile).length === 0 || !userProfile.healthGoals) {
-                showMessage('Profile Incomplete', 'Please complete your profile, especially health goals, to generate a plan.');
+                showMessageModal('Profile Incomplete', 'Please complete your profile, especially health goals, to generate a plan.', 'error');
                 return;
             }
             showLoading(true);
             generatedPlan = ''; // Clear previous plan
-            
+
             try {
-                // *** This is the crucial part that calls your Node.js backend ***
                 const response = await fetch(`${BACKEND_API_URL}/generate-plan`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -449,25 +626,25 @@
                 if (result.plan) {
                     generatedPlan = result.plan;
                 } else {
-                    showMessage('API Error', 'Failed to generate plan. Unexpected response from backend.');
+                    showMessageModal('API Error', 'Failed to generate plan. Unexpected response from backend.', 'error');
                     console.error('Backend response structure error:', result);
                 }
             } catch (error) {
-                showMessage('Network Error', `Failed to generate plan: ${error.message}. Please ensure your backend server is running at ${BACKEND_API_URL}.`);
+                showMessageModal('Network Error', `Failed to generate plan: ${error.message}. Please ensure your backend server is running at ${BACKEND_API_URL}.`, 'error');
                 console.error('Frontend fetch error:', error);
             } finally {
                 showLoading(false);
                 renderApp(); // Re-render to show generated plan or error message
             }
         }
-        
+
         let sampleChartInstance = null;
         function renderSampleChart(canvasElement) {
             if (sampleChartInstance) {
                 sampleChartInstance.destroy(); // Destroy previous instance to prevent conflicts
             }
             const ctx = canvasElement.getContext('2d');
-            
+
             // Create some sample data based on logged activities count or timestamps
             const labels = recentActivities.slice(0, 7).map((act, index) => `Day ${index + 1}`).reverse();
             const dataPoints = recentActivities.slice(0, 7).map(() => Math.floor(Math.random() * 5) + 1).reverse(); // Random "effort"
@@ -518,20 +695,22 @@
             showLoading(true);
             setTimeout(() => {
                 // Check if a user was previously logged in (simulated using localStorage)
-                const storedUser = localStorage.getItem('currentUser');
-                if (storedUser) {
-                    currentUser = JSON.parse(storedUser);
-                    const storedProfile = localStorage.getItem(`userProfile_${currentUser.uid}`);
+                const storedUserEmail = localStorage.getItem('currentUser');
+                if (storedUserEmail) {
+                    currentUser = storedUserEmail; // currentUser is now the email string
+                    const storedProfile = localStorage.getItem(`userProfile_${currentUser}`);
                     if (storedProfile) {
                         userProfile = JSON.parse(storedProfile);
                     } else {
                         userProfile = {}; // User exists but no profile, send to profile setup
                     }
-                    const storedActivities = localStorage.getItem(`activities_${currentUser.uid}`);
+                    const storedActivities = localStorage.getItem(`activities_${currentUser}`);
                     recentActivities = storedActivities ? JSON.parse(storedActivities) : [];
-                    currentPage = 'dashboard';
+
+                    // Determine initial page based on whether profile is complete
+                    currentPage = Object.keys(userProfile).length > 0 ? 'dashboard' : 'profileSetup';
                 } else {
-                    currentPage = 'auth';
+                    currentPage = 'auth'; // No user logged in, show auth screen
                 }
                 showLoading(false); // This will trigger the first renderApp()
             }, 500);
