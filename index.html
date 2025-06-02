@@ -149,6 +149,7 @@
 
         // --- Rendering Functions ---
         function renderApp() {
+            console.log("renderApp: Called. Current page:", currentPage, "Is loading:", isLoading, "Modal visible:", messageModal.visible);
             let content = '';
             if (isLoading) {
                 content += renderLoadingSpinner();
@@ -162,13 +163,23 @@
                     content += renderAuthScreen();
                     break;
                 case 'dashboard':
-                    content += renderDashboardScreen();
+                    const dashboardContent = renderDashboardScreen();
+                    console.log("renderApp: Dashboard content generated (first 200 chars):", dashboardContent.substring(0, 200));
+                    content += dashboardContent;
                     break;
                 default:
                     content += `<p>Error: Page not found</p>`;
             }
-            appContainer.innerHTML = content;
-            attachEventListeners(); // Re-attach listeners after every render
+            try {
+                console.log("renderApp: Setting innerHTML for appContainer.");
+                appContainer.innerHTML = content;
+                attachEventListeners();
+                console.log("renderApp: InnerHTML set and event listeners attached.");
+            } catch (e) {
+                console.error("Error rendering app content:", e);
+                // Display a generic error message to the user if rendering fails
+                appContainer.innerHTML = `<div class="text-center text-red-500 p-8">An unexpected error occurred: ${e.message}. Please refresh. Check console for details.</div>`;
+            }
         }
 
         function renderLoadingSpinner() {
@@ -226,7 +237,8 @@
 
             return `
                 <div class="flex flex-col items-center justify-center min-h-[80vh]">
-                    <div class="card w-full max-w-2xl"> <h2 class="text-3xl font-bold text-center text-indigo-700 mb-8">${currentUser ? 'Complete Your Profile' : 'Welcome! Sign Up or Log In'}</h2>
+                    <div class="card w-full max-w-2xl"> 
+                        <h2 class="text-3xl font-bold text-center text-indigo-700 mb-8">${currentUser ? 'Complete Your Profile' : 'Welcome! Sign Up or Log In'}</h2>
                         <p class="text-center text-slate-600 mb-6">
                             ${currentUser ? 'Please complete your profile to personalize your experience.' : 'Enter your details to sign up or log in.'}
                         </p>
@@ -300,8 +312,6 @@
                 </div>
             `;
         }
-
-        // renderProfileSetupScreen is no longer needed as its content is merged into renderAuthScreen
 
         function renderDashboardScreen() {
             let activitiesHtml = recentActivities.length > 0
@@ -435,6 +445,7 @@
 
         // Combined Auth and Profile Submission Handler
         async function handleAuthSubmit() {
+            console.log("handleAuthSubmit: Started");
             showLoading(true);
 
             const emailInput = document.getElementById('auth-email');
@@ -458,18 +469,21 @@
             if (!isValidEmail(email)) {
                 showLoading(false);
                 emailError.textContent = 'Please enter a valid email address.';
+                console.log("handleAuthSubmit: Invalid email.");
                 return;
             }
 
             if (password.length < 6) {
                 showLoading(false);
                 passwordError.textContent = 'Password must be at least 6 characters long.';
+                console.log("handleAuthSubmit: Password too short.");
                 return;
             }
 
             if (password !== confirmPassword) {
                 showLoading(false);
                 confirmPasswordError.textContent = 'Passwords do not match.';
+                console.log("handleAuthSubmit: Passwords do not match.");
                 return;
             }
 
@@ -488,6 +502,7 @@
             if (!isProfileComplete) {
                 showLoading(false);
                 showMessageModal('Profile Incomplete', 'Please fill in all required health profile fields (Age, Gender, Height, Weight, Activity Level, Health Goals).', 'error');
+                console.log("handleAuthSubmit: Profile incomplete, showing error modal.");
                 return;
             }
 
@@ -500,9 +515,11 @@
                 existingUsers.push(email);
                 localStorage.setItem('users', JSON.stringify(existingUsers));
                 showMessageModal('Signup Successful!', 'Welcome! Your account has been created.', 'success');
+                console.log("handleAuthSubmit: New user signed up.");
             } else {
                 // Existing User Login/Profile Update
                 showMessageModal('Login Successful!', 'Welcome back!', 'success');
+                console.log("handleAuthSubmit: Existing user logged in/profile updated.");
             }
 
             // Set current user and save/update profile
@@ -520,9 +537,11 @@
             localStorage.setItem('userProfile_' + currentUser, JSON.stringify(userProfile));
             recentActivities = JSON.parse(localStorage.getItem('activities_' + currentUser)) || []; // Ensure activities are loaded for this user
 
+            console.log("handleAuthSubmit: User data updated in localStorage. Transitioning to dashboard in 1s.");
             setTimeout(() => {
                 currentPage = 'dashboard';
                 showLoading(false);
+                console.log("handleAuthSubmit: Timeout finished, setting currentPage to dashboard, calling renderApp().");
                 renderApp();
             }, 1000);
         }
