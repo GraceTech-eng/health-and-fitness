@@ -22,6 +22,15 @@
             height: 300px; /* Base height, Tailwind h-72 or h-80 */
             max-height: 400px; /* max-h-96 */
         }
+        .chart-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #94a3b8; /* text-slate-400 */
+            font-weight: 600;
+            display: none;
+        }
         @media (min-width: 768px) { /* md breakpoint */
             .chart-container {
                 height: 350px; /* Tailwind h-80 or h-96 */
@@ -29,6 +38,13 @@
         }
         .modal-backdrop {
             background-color: rgba(0, 0, 0, 0.5);
+            pointer-events: auto;
+        }
+        #app > * {
+            pointer-events: none; /* Disable interactions behind modal */
+        }
+        .modal-backdrop + * {
+            pointer-events: auto; /* Re-enable for modal content */
         }
         .btn-primary {
             background-color: #4f46e5; /* bg-indigo-600 */
@@ -54,48 +70,34 @@
         h2, h3, h4 {
             color: #1e293b; /* text-slate-800 */
         }
-
-        /* NEW/UPDATED CSS FOR VALIDATION & PASSWORD TOGGLE */
         .input-group {
             position: relative;
-            margin-bottom: 1rem; /* Space between input groups */
+            margin-bottom: 1rem;
             display: flex;
-            flex-direction: column; /* Stack label and input/toggle */
+            flex-direction: column;
         }
         .input-group input {
-            flex-grow: 1; /* Make input fill available space */
-            padding-right: 40px; /* Space for the eye icon */
+            flex-grow: 1;
+            padding-right: 40px;
         }
-        /* Adjust password toggle position within input-group */
         .input-group .password-toggle {
             position: absolute;
             right: 10px;
-            top: 50%; /* Adjust top to be relative to the input, not the label */
-            transform: translateY(-50%); /* Vertically center the eye icon */
+            top: 50%;
+            transform: translateY(-50%);
             cursor: pointer;
             font-size: 1.2em;
             color: #888;
-            z-index: 2; /* Ensure it's above the input */
-            /* Ensure it's correctly positioned relative to the input field, not the label */
-            margin-top: 1.25rem; /* Adjust based on label height and input padding */
+            z-index: 2;
         }
         .error-message {
-            color: #ef4444; /* Tailwind red-500 */
+            color: #ef4444; /* red-500 */
             font-size: 0.875rem; /* text-sm */
             margin-top: 0.25rem; /* mt-1 */
             display: block;
         }
-        /* Adjust existing input styles to ensure consistent padding */
-        input {
+        input, select, textarea {
             padding: 0.75rem 1rem; /* px-4 py-2 */
-            margin: 0; /* Remove default margin from input, use .input-group margin */
-            border: 1px solid #d1d5db; /* border-slate-300 */
-            border-radius: 0.5rem; /* rounded-lg */
-            width: 100%;
-            box-sizing: border-box;
-        }
-        select, textarea {
-             padding: 0.75rem 1rem; /* px-4 py-2 */
             border: 1px solid #d1d5db; /* border-slate-300 */
             border-radius: 0.5rem; /* rounded-lg */
             width: 100%;
@@ -105,24 +107,18 @@
 </head>
 <body class="min-h-screen flex flex-col">
     <div id="app" class="flex-grow container mx-auto p-4 md:p-8">
-        </div>
+    </div>
 
     <script type="module">
         // --- Global State & Configuration ---
-        // Using localStorage for basic persistence. In a real app, Firebase Auth/Firestore would manage this.
-        let currentUser = localStorage.getItem('currentUser') || null; // Stores email of logged-in user
-        // Load profile specific to current user. If no current user, userProfile will be an empty object.
+        let currentUser = localStorage.getItem('currentUser') || null;
         let userProfile = currentUser ? (JSON.parse(localStorage.getItem('userProfile_' + currentUser)) || {}) : {};
         let recentActivities = currentUser ? (JSON.parse(localStorage.getItem('activities_' + currentUser)) || []) : [];
         let generatedPlan = '';
-
-        let currentPage = 'auth'; // Default page
+        let currentPage = 'auth';
         let isLoading = false;
-        let messageModal = { title: '', message: '', visible: false, type: 'info' }; // Added type for styling
-
+        let messageModal = { title: '', message: '', visible: false, type: 'info' };
         const appContainer = document.getElementById('app');
-
-        // IMPORTANT: Point this to your deployed Node.js backend server
         const BACKEND_API_URL = 'https://health-app-backend-9pit.onrender.com';
 
         // --- Utility Functions ---
@@ -131,7 +127,7 @@
             renderApp();
         }
 
-        function showMessageModal(title, message, type = 'info') { // type can be 'success', 'error', 'info'
+        function showMessageModal(title, message, type = 'info') {
             messageModal = { title, message, visible: true, type };
             renderApp();
         }
@@ -141,7 +137,6 @@
             renderApp();
         }
 
-        // Function to validate email format using a simple regex
         function isValidEmail(email) {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             return emailRegex.test(email);
@@ -159,26 +154,27 @@
             }
 
             switch (currentPage) {
-                case 'auth': // This screen now handles both login and full profile setup
+                case 'auth':
                     content += renderAuthScreen();
                     break;
                 case 'dashboard':
-                    const dashboardContent = renderDashboardScreen();
-                    console.log("renderApp: Dashboard content generated (first 200 chars):", dashboardContent.substring(0, 200));
-                    content += dashboardContent;
+                    content += renderDashboardScreen();
                     break;
                 default:
-                    content += `<p>Error: Page not found</p>`;
+                    content += `<p class="text-center text-red-500">Error: Page not found</p>`;
             }
             try {
-                console.log("renderApp: Setting innerHTML for appContainer.");
                 appContainer.innerHTML = content;
                 attachEventListeners();
-                console.log("renderApp: InnerHTML set and event listeners attached.");
+                if (currentPage === 'dashboard' && recentActivities.length > 0) {
+                    setTimeout(() => {
+                        const chartCanvas = document.getElementById('progressChartCanvas');
+                        if (chartCanvas) renderSampleChart(chartCanvas);
+                    }, 0);
+                }
             } catch (e) {
                 console.error("Error rendering app content:", e);
-                // Display a generic error message to the user if rendering fails
-                appContainer.innerHTML = `<div class="text-center text-red-500 p-8">An unexpected error occurred: ${e.message}. Please refresh. Check console for details.</div>`;
+                appContainer.innerHTML = `<div class="text-center text-red-500 p-8">An error occurred while loading the app. Please try refreshing the page or contact support if the issue persists.</div>`;
             }
         }
 
@@ -223,9 +219,7 @@
             `;
         }
 
-        // Combined Auth and Profile Setup Screen
         function renderAuthScreen() {
-            // Pre-fill values if userProfile exists (e.g., for existing incomplete profiles)
             const currentAge = userProfile?.age || '';
             const currentGender = userProfile?.gender || '';
             const currentHeight = userProfile?.height || '';
@@ -233,7 +227,7 @@
             const currentActivityLevel = userProfile?.activityLevel || '';
             const currentHealthGoals = userProfile?.healthGoals || '';
             const currentNicheSpecific = userProfile?.nicheSpecific || '';
-            const currentEmail = currentUser || ''; // Pre-fill email if logged in but profile incomplete
+            const currentEmail = currentUser || '';
 
             return `
                 <div class="flex flex-col items-center justify-center min-h-[80vh]">
@@ -263,9 +257,10 @@
 
                             <h3 class="text-xl font-semibold mt-8 mb-4 text-slate-800">Your Health Profile</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
+                                <div class="input-group">
                                     <label for="profile-age" class="block text-sm font-medium text-slate-700 mb-1">Age</label>
                                     <input type="number" id="profile-age" class="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="e.g., 30" value="${currentAge}">
+                                    <span id="profile-age-error" class="error-message"></span>
                                 </div>
                                 <div>
                                     <label for="profile-gender" class="block text-sm font-medium text-slate-700 mb-1">Gender</label>
@@ -276,13 +271,15 @@
                                         <option value="other" ${currentGender === 'other' ? 'selected' : ''}>Other</option>
                                     </select>
                                 </div>
-                                <div>
+                                <div class="input-group">
                                     <label for="profile-height" class="block text-sm font-medium text-slate-700 mb-1">Height (cm)</label>
                                     <input type="number" id="profile-height" class="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="e.g., 175" value="${currentHeight}">
+                                    <span id="profile-height-error" class="error-message"></span>
                                 </div>
-                                <div>
+                                <div class="input-group">
                                     <label for="profile-weight" class="block text-sm font-medium text-slate-700 mb-1">Weight (kg)</label>
                                     <input type="number" id="profile-weight" class="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="e.g., 70" value="${currentWeight}">
+                                    <span id="profile-weight-error" class="error-message"></span>
                                 </div>
                                 <div class="md:col-span-2">
                                     <label for="profile-activity-level" class="block text-sm font-medium text-slate-700 mb-1">Activity Level</label>
@@ -350,6 +347,25 @@
                         <h3 class="text-2xl font-semibold mb-4">Niche-Specific Logging</h3>
                         <p class="text-slate-600 mb-4">Track your activities to monitor progress. This section will be tailored to your chosen niche (e.g., workouts, nutrition, mindfulness).</p>
                         <button id="logActivityBtn" class="btn-primary px-6 py-2 rounded-lg mb-4">Log Generic Activity</button>
+                        <div id="activityModal" class="fixed inset-0 modal-backdrop hidden flex items-center justify-center z-50 p-4">
+                            <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full">
+                                <h3 class="text-xl font-semibold mb-4">Log Activity</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="activity-type" class="block text-sm font-medium text-slate-700 mb-1">Activity Type</label>
+                                        <input type="text" id="activity-type" class="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="e.g., Running, Yoga">
+                                    </div>
+                                    <div>
+                                        <label for="activity-notes" class="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+                                        <textarea id="activity-notes" class="w-full px-4 py-2 border border-slate-300 rounded-lg h-24" placeholder="Details about the activity"></textarea>
+                                    </div>
+                                    <div class="flex justify-end space-x-2">
+                                        <button id="cancelActivityBtn" class="btn-secondary px-4 py-2 rounded-md">Cancel</button>
+                                        <button id="saveActivityBtn" class="btn-primary px-4 py-2 rounded-md">Save</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <h4 class="text-xl font-medium mb-2">Recent Activities:</h4>
                         <ul class="list-disc list-inside pl-5">${activitiesHtml}</ul>
                     </section>
@@ -357,9 +373,9 @@
                     <section class="card" id="progress-tracking">
                         <h3 class="text-2xl font-semibold mb-4">Progress Tracking</h3>
                         <p class="text-slate-600 mb-4">Visualize your journey over time. Charts and graphs for key metrics like weight, exercise progression, or sleep consistency will appear here.</p>
-                        <div class="chart-container bg-slate-100 rounded-lg flex items-center justify-center">
+                        <div class="chart-container bg-slate-100 rounded-lg">
                             <canvas id="progressChartCanvas"></canvas>
-                            <p id="chartPlaceholderText" class="text-slate-400 font-semibold">Chart Placeholder - Data will be visualized here</p>
+                            <p id="chartPlaceholderText" class="chart-placeholder">Chart Placeholder - Data will be visualized here</p>
                         </div>
                     </section>
 
@@ -396,12 +412,12 @@
             const closeModalBtn = document.getElementById('closeModalBtn');
             if (closeModalBtn) closeModalBtn.onclick = closeMessageModal;
 
-            document.querySelectorAll('.password-toggle').forEach(toggle => {
-                toggle.removeEventListener('click', togglePasswordVisibility); // Prevent duplicate listeners
-                toggle.addEventListener('click', togglePasswordVisibility);
+            document.addEventListener('click', (event) => {
+                if (event.target.classList.contains('password-toggle')) {
+                    togglePasswordVisibility(event);
+                }
             });
 
-            // Only attach authSubmitBtn listener if on the auth screen
             if (currentPage === 'auth') {
                 const authSubmitBtn = document.getElementById('authSubmitBtn');
                 if (authSubmitBtn) authSubmitBtn.onclick = handleAuthSubmit;
@@ -409,43 +425,57 @@
                 const logoutBtn = document.getElementById('logoutBtn');
                 if (logoutBtn) logoutBtn.onclick = handleLogout;
                 const logActivityBtn = document.getElementById('logActivityBtn');
-                if (logActivityBtn) logActivityBtn.onclick = handleLogActivity;
+                if (logActivityBtn) logActivityBtn.onclick = () => {
+                    document.getElementById('activityModal').classList.remove('hidden');
+                };
+                const saveActivityBtn = document.getElementById('saveActivityBtn');
+                if (saveActivityBtn) saveActivityBtn.onclick = async () => {
+                    const type = document.getElementById('activity-type').value;
+                    const notes = document.getElementById('activity-notes').value;
+                    if (type && notes) {
+                        recentActivities.unshift({
+                            id: `act${Date.now()}`,
+                            type,
+                            notes,
+                            timestamp: new Date().toISOString()
+                        });
+                        if (currentUser) {
+                            localStorage.setItem(`activities_${currentUser}`, JSON.stringify(recentActivities));
+                        }
+                        document.getElementById('activityModal').classList.add('hidden');
+                        renderApp();
+                        showMessageModal('Activity Logged', 'Your activity has been recorded.', 'success');
+                    }
+                };
+                const cancelActivityBtn = document.getElementById('cancelActivityBtn');
+                if (cancelActivityBtn) cancelActivityBtn.onclick = () => {
+                    document.getElementById('activityModal').classList.add('hidden');
+                };
                 const generatePlanBtn = document.getElementById('generatePlanBtn');
                 if (generatePlanBtn) generatePlanBtn.onclick = handleGeneratePlan;
 
-                const chartCanvas = document.getElementById('progressChartCanvas');
-                if (chartCanvas) {
-                    if (recentActivities.length > 0) {
-                        document.getElementById('chartPlaceholderText').style.display = 'none';
-                        renderSampleChart(chartCanvas);
-                    } else {
-                        document.getElementById('chartPlaceholderText').style.display = 'flex';
-                    }
+                const chartPlaceholder = document.getElementById('chartPlaceholderText');
+                if (chartPlaceholder) {
+                    chartPlaceholder.style.display = recentActivities.length > 0 ? 'none' : 'block';
                 }
             }
         }
 
-        // Password Visibility Toggle Function
         function togglePasswordVisibility(event) {
-            const toggle = event.currentTarget;
+            const toggle = event.target;
             const targetId = toggle.dataset.target;
             const passwordInput = document.getElementById(targetId);
 
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
-                toggle.textContent = '🙈'; // Change to hide icon
-                // Adjust position for text input if needed (optional, depends on font rendering)
-                toggle.style.marginTop = '1.25rem'; // Keep consistent with password type
+                toggle.textContent = '🙈';
             } else {
                 passwordInput.type = 'password';
-                toggle.textContent = '👁️'; // Change to show icon
-                toggle.style.marginTop = '1.25rem'; // Keep consistent
+                toggle.textContent = '👁️';
             }
         }
 
-        // Combined Auth and Profile Submission Handler
         async function handleAuthSubmit() {
-            console.log("handleAuthSubmit: Started");
             showLoading(true);
 
             const emailInput = document.getElementById('auth-email');
@@ -454,40 +484,43 @@
 
             const emailError = document.getElementById('auth-email-error');
             const passwordError = document.getElementById('auth-password-error');
-            const confirmPasswordError = document.getElementById('auth-confirm-password-error'); // New error span
+            const confirmPasswordError = document.getElementById('auth-confirm-password-error');
+            const ageError = document.getElementById('profile-age-error');
+            const heightError = document.getElementById('profile-height-error');
+            const weightError = document.getElementById('profile-weight-error');
 
             // Clear previous errors
             emailError.textContent = '';
             passwordError.textContent = '';
             confirmPasswordError.textContent = '';
+            ageError.textContent = '';
+            heightError.textContent = '';
+            weightError.textContent = '';
 
             const email = emailInput.value.trim();
             const password = passwordInput.value;
             const confirmPassword = confirmPasswordInput.value;
 
-            // --- Basic Auth Validation ---
+            // Auth Validation
             if (!isValidEmail(email)) {
                 showLoading(false);
                 emailError.textContent = 'Please enter a valid email address.';
-                console.log("handleAuthSubmit: Invalid email.");
                 return;
             }
 
             if (password.length < 6) {
                 showLoading(false);
                 passwordError.textContent = 'Password must be at least 6 characters long.';
-                console.log("handleAuthSubmit: Password too short.");
                 return;
             }
 
             if (password !== confirmPassword) {
                 showLoading(false);
                 confirmPasswordError.textContent = 'Passwords do not match.';
-                console.log("handleAuthSubmit: Passwords do not match.");
                 return;
             }
 
-            // --- Profile Data Capture ---
+            // Profile Data Capture
             const age = document.getElementById('profile-age').value;
             const gender = document.getElementById('profile-gender').value;
             const height = document.getElementById('profile-height').value;
@@ -496,33 +529,50 @@
             const healthGoals = document.getElementById('profile-health-goals').value;
             const nicheSpecific = document.getElementById('profile-niche-specific').value;
 
-            // --- Profile Data Validation (for new signups or incomplete profiles) ---
+            // Profile Validation
             const isProfileComplete = age && gender && height && weight && activityLevel && healthGoals;
-
             if (!isProfileComplete) {
                 showLoading(false);
                 showMessageModal('Profile Incomplete', 'Please fill in all required health profile fields (Age, Gender, Height, Weight, Activity Level, Health Goals).', 'error');
-                console.log("handleAuthSubmit: Profile incomplete, showing error modal.");
                 return;
             }
 
-            // Simulate user management
-            let existingUsers = JSON.parse(localStorage.getItem('users')) || [];
-            const isExistingUser = existingUsers.includes(email);
+            if (parseInt(age) <= 0 || isNaN(parseInt(age))) {
+                showLoading(false);
+                ageError.textContent = 'Please enter a valid age.';
+                return;
+            }
+            if (parseFloat(height) <= 0 || isNaN(parseFloat(height))) {
+                showLoading(false);
+                heightError.textContent = 'Please enter a valid height.';
+                return;
+            }
+            if (parseFloat(weight) <= 0 || isNaN(parseFloat(weight))) {
+                showLoading(false);
+                weightError.textContent = 'Please enter a valid weight.';
+                return;
+            }
+
+            // Simulate User Management
+            let existingUsers = JSON.parse(localStorage.getItem('users')) || {};
+            const isExistingUser = existingUsers.hasOwnProperty(email);
 
             if (!isExistingUser) {
                 // New User Signup
-                existingUsers.push(email);
+                existingUsers[email] = password;
                 localStorage.setItem('users', JSON.stringify(existingUsers));
                 showMessageModal('Signup Successful!', 'Welcome! Your account has been created.', 'success');
-                console.log("handleAuthSubmit: New user signed up.");
             } else {
-                // Existing User Login/Profile Update
+                // Existing User Login
+                if (existingUsers[email] !== password) {
+                    showLoading(false);
+                    passwordError.textContent = 'Incorrect password.';
+                    return;
+                }
                 showMessageModal('Login Successful!', 'Welcome back!', 'success');
-                console.log("handleAuthSubmit: Existing user logged in/profile updated.");
             }
 
-            // Set current user and save/update profile
+            // Update User Data
             currentUser = email;
             userProfile = {
                 age: parseInt(age),
@@ -533,29 +583,25 @@
                 healthGoals: healthGoals,
                 nicheSpecific: nicheSpecific
             };
-            localStorage.setItem('currentUser', currentUser); // Store current user for persistence
+            localStorage.setItem('currentUser', currentUser);
             localStorage.setItem('userProfile_' + currentUser, JSON.stringify(userProfile));
-            recentActivities = JSON.parse(localStorage.getItem('activities_' + currentUser)) || []; // Ensure activities are loaded for this user
+            recentActivities = JSON.parse(localStorage.getItem('activities_' + currentUser)) || [];
 
-            console.log("handleAuthSubmit: User data updated in localStorage. Transitioning to dashboard in 1s.");
             setTimeout(() => {
                 currentPage = 'dashboard';
                 showLoading(false);
-                console.log("handleAuthSubmit: Timeout finished, setting currentPage to dashboard, calling renderApp().");
                 renderApp();
             }, 1000);
         }
 
-
         function handleLogout() {
             showLoading(true);
             setTimeout(() => {
-                localStorage.removeItem('currentUser'); // Remove current user from local storage
-                localStorage.removeItem('userProfile_' + currentUser); // Remove specific user profile
-                localStorage.removeItem('activities_' + currentUser); // Remove specific user activities
-                // Clear generic userProfile and recentActivities in memory
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('userProfile_' + currentUser);
+                localStorage.removeItem('activities_' + currentUser);
                 currentUser = null;
-                userProfile = {}; // Reset to empty object
+                userProfile = {};
                 recentActivities = [];
                 generatedPlan = '';
                 currentPage = 'auth';
@@ -564,34 +610,19 @@
             }, 500);
         }
 
-        async function handleLogActivity() {
-            const newActivity = {
-                id: `act${Date.now()}`,
-                type: 'Generic Activity',
-                notes: `Logged at ${new Date().toLocaleTimeString()}`,
-                timestamp: new Date().toISOString()
-            };
-            recentActivities.unshift(newActivity); // Add to beginning
-            if (currentUser) {
-                localStorage.setItem(`activities_${currentUser}`, JSON.stringify(recentActivities)); // Use currentUser (email) as key
-            }
-            renderApp(); // Re-render to show new activity
-            showMessageModal('Activity Logged', 'Your activity has been recorded.', 'success');
-        }
-
         async function handleGeneratePlan() {
             if (!userProfile || Object.keys(userProfile).length === 0 || !userProfile.healthGoals) {
                 showMessageModal('Profile Incomplete', 'Please complete your profile, especially health goals, to generate a plan.', 'error');
                 return;
             }
             showLoading(true);
-            generatedPlan = ''; // Clear previous plan
+            generatedPlan = '';
 
             try {
                 const response = await fetch(`${BACKEND_API_URL}/generate-plan`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userProfile: userProfile }) // Send the user profile to the backend
+                    body: JSON.stringify({ userProfile: userProfile })
                 });
 
                 if (!response.ok) {
@@ -604,35 +635,38 @@
                     generatedPlan = result.plan;
                 } else {
                     showMessageModal('API Error', 'Failed to generate plan. Unexpected response from backend.', 'error');
-                    console.error('Backend response structure error:', result);
                 }
             } catch (error) {
-                showMessageModal('Network Error', `Failed to generate plan: ${error.message}. Please ensure your backend server is running at ${BACKEND_API_URL}.`, 'error');
+                generatedPlan = `Sample Plan (Backend Unavailable):
+- Daily Exercise: 30 minutes of moderate activity (e.g., brisk walking).
+- Nutrition: Focus on balanced meals with vegetables, lean protein, and whole grains.
+- Hydration: Drink 8 cups of water daily.`;
+                showMessageModal('Network Error', `Failed to connect to backend: ${error.message}. Displaying sample plan instead.`, 'error');
                 console.error('Frontend fetch error:', error);
             } finally {
                 showLoading(false);
-                renderApp(); // Re-render to show generated plan or error message
+                renderApp();
             }
         }
 
         let sampleChartInstance = null;
         function renderSampleChart(canvasElement) {
             if (sampleChartInstance) {
-                sampleChartInstance.destroy(); // Destroy previous instance to prevent conflicts
+                sampleChartInstance.destroy();
             }
             const ctx = canvasElement.getContext('2d');
 
-            const labels = recentActivities.slice(0, 7).map((act, index) => `Day ${index + 1}`).reverse();
-            const dataPoints = recentActivities.slice(0, 7).map(() => Math.floor(Math.random() * 5) + 1).reverse(); // Random "effort"
+            const labels = recentActivities.slice(0, 7).map(act => new Date(act.timestamp).toLocaleDateString()).reverse();
+            const dataPoints = recentActivities.slice(0, 7).map((act, index) => index + 1).reverse();
 
             sampleChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Activity Level (Sample)',
+                        label: 'Activity Count',
                         data: dataPoints,
-                        borderColor: '#4f46e5', // indigo-600
+                        borderColor: '#4f46e5',
                         backgroundColor: 'rgba(79, 70, 229, 0.1)',
                         tension: 0.3,
                         fill: true,
@@ -642,29 +676,16 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: 'Sample Metric' }
-                        },
-                        x: {
-                             title: { display: true, text: 'Recent Activities' }
-                        }
+                        y: { beginAtZero: true, title: { display: true, text: 'Activities Logged' } },
+                        x: { title: { display: true, text: 'Date' } }
                     },
                     plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top',
-                        },
-                        tooltip: {
-                            enabled: true,
-                            mode: 'index',
-                            intersect: false,
-                        }
-                    },
+                        legend: { display: true, position: 'top' },
+                        tooltip: { enabled: true, mode: 'index', intersect: false }
+                    }
                 }
             });
         }
-
 
         // --- Initial Load ---
         window.onload = () => {
@@ -675,12 +696,9 @@
                     currentUser = storedUserEmail;
                     userProfile = JSON.parse(localStorage.getItem(`userProfile_${currentUser}`)) || {};
                     recentActivities = JSON.parse(localStorage.getItem(`activities_${currentUser}`)) || [];
-
-                    // If a user is logged in AND their profile is complete, go to dashboard
-                    // Otherwise, stay on auth screen (which now includes profile setup)
                     currentPage = (currentUser && Object.keys(userProfile).length > 0 && userProfile.healthGoals) ? 'dashboard' : 'auth';
                 } else {
-                    currentPage = 'auth'; // No user logged in, show auth screen
+                    currentPage = 'auth';
                 }
                 showLoading(false);
                 renderApp();
