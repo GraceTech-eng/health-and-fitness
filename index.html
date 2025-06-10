@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Health & Fitness Utility App</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="output.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -16,24 +17,24 @@
         .chart-container {
             position: relative;
             width: 100%;
-            max-width: 600px; /* max-w-2xl equivalent */
+            max-width: 600px;
             margin-left: auto;
             margin-right: auto;
-            height: 300px; /* Base height, Tailwind h-72 or h-80 */
-            max-height: 400px; /* max-h-96 */
+            height: 300px;
+            max-height: 400px;
         }
         .chart-placeholder {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: #94a3b8; /* text-slate-400 */
+            color: #94a3b8;
             font-weight: 600;
             display: none;
         }
-        @media (min-width: 768px) { /* md breakpoint */
+        @media (min-width: 768px) {
             .chart-container {
-                height: 350px; /* Tailwind h-80 or h-96 */
+                height: 350px;
             }
         }
         .modal-backdrop {
@@ -41,34 +42,34 @@
             pointer-events: auto;
         }
         #app > * {
-            pointer-events: none; /* Disable interactions behind modal */
+            pointer-events: none;
         }
         .modal-backdrop + * {
-            pointer-events: auto; /* Re-enable for modal content */
+            pointer-events: auto;
         }
         .btn-primary {
-            background-color: #4f46e5; /* bg-indigo-600 */
+            background-color: #4f46e5;
             color: white;
         }
         .btn-primary:hover {
-            background-color: #4338ca; /* hover:bg-indigo-700 */
+            background-color: #4338ca;
         }
         .btn-secondary {
-            background-color: #7c3aed; /* bg-purple-600 */
+            background-color: #7c3aed;
             color: white;
         }
         .btn-secondary:hover {
-            background-color: #6d28d9; /* hover:bg-purple-700 */
+            background-color: #6d28d9;
         }
         .card {
             background-color: white;
-            border-radius: 0.75rem; /* rounded-xl */
-            padding: 2rem; /* p-8 */
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); /* shadow-lg */
-            margin-bottom: 2rem; /* mb-8 */
+            border-radius: 0.75rem;
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
         }
         h2, h3, h4 {
-            color: #1e293b; /* text-slate-800 */
+            color: #1e293b;
         }
         .input-group {
             position: relative;
@@ -91,15 +92,15 @@
             z-index: 2;
         }
         .error-message {
-            color: #ef4444; /* red-500 */
-            font-size: 0.875rem; /* text-sm */
-            margin-top: 0.25rem; /* mt-1 */
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
             display: block;
         }
         input, select, textarea {
-            padding: 0.75rem 1rem; /* px-4 py-2 */
-            border: 1px solid #d1d5db; /* border-slate-300 */
-            border-radius: 0.5rem; /* rounded-lg */
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
             width: 100%;
             box-sizing: border-box;
         }
@@ -144,7 +145,6 @@
 
         // --- Rendering Functions ---
         function renderApp() {
-            console.log("renderApp: Called. Current page:", currentPage, "Is loading:", isLoading, "Modal visible:", messageModal.visible);
             let content = '';
             if (isLoading) {
                 content += renderLoadingSpinner();
@@ -169,7 +169,7 @@
                 if (currentPage === 'dashboard' && recentActivities.length > 0) {
                     setTimeout(() => {
                         const chartCanvas = document.getElementById('progressChartCanvas');
-                        if (chartCanvas) renderSampleChart(chartCanvas);
+                        if (chartCanvas) renderSonyrenderSampleChart(chartCanvas);
                     }, 0);
                 }
             } catch (e) {
@@ -259,7 +259,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="input-group">
                                     <label for="profile-age" class="block text-sm font-medium text-slate-700 mb-1">Age</label>
-                                    <input type="number" id="profile-age" class="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="e.g., 30" value="${currentAge}">
+                                    <input type="number" id="profile-age" class="w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="e.g., 30" value="${ economiaAge}">
                                     <span id="profile-age-error" class="error-message"></span>
                                 </div>
                                 <div>
@@ -489,7 +489,6 @@
             const heightError = document.getElementById('profile-height-error');
             const weightError = document.getElementById('profile-weight-error');
 
-            // Clear previous errors
             emailError.textContent = '';
             passwordError.textContent = '';
             confirmPasswordError.textContent = '';
@@ -501,7 +500,6 @@
             const password = passwordInput.value;
             const confirmPassword = confirmPasswordInput.value;
 
-            // Auth Validation
             if (!isValidEmail(email)) {
                 showLoading(false);
                 emailError.textContent = 'Please enter a valid email address.';
@@ -520,7 +518,6 @@
                 return;
             }
 
-            // Profile Data Capture
             const age = document.getElementById('profile-age').value;
             const gender = document.getElementById('profile-gender').value;
             const height = document.getElementById('profile-height').value;
@@ -529,7 +526,6 @@
             const healthGoals = document.getElementById('profile-health-goals').value;
             const nicheSpecific = document.getElementById('profile-niche-specific').value;
 
-            // Profile Validation
             const isProfileComplete = age && gender && height && weight && activityLevel && healthGoals;
             if (!isProfileComplete) {
                 showLoading(false);
@@ -553,17 +549,14 @@
                 return;
             }
 
-            // Simulate User Management
             let existingUsers = JSON.parse(localStorage.getItem('users')) || {};
             const isExistingUser = existingUsers.hasOwnProperty(email);
 
             if (!isExistingUser) {
-                // New User Signup
                 existingUsers[email] = password;
                 localStorage.setItem('users', JSON.stringify(existingUsers));
                 showMessageModal('Signup Successful!', 'Welcome! Your account has been created.', 'success');
             } else {
-                // Existing User Login
                 if (existingUsers[email] !== password) {
                     showLoading(false);
                     passwordError.textContent = 'Incorrect password.';
@@ -572,7 +565,6 @@
                 showMessageModal('Login Successful!', 'Welcome back!', 'success');
             }
 
-            // Update User Data
             currentUser = email;
             userProfile = {
                 age: parseInt(age),
